@@ -61,7 +61,9 @@ export default function RoadHero() {
       const total = el.offsetHeight - window.innerHeight;
       const top = el.getBoundingClientRect().top + window.scrollY;
       const p = i < 0 ? 0 : stopProgress(i);
-      window.scrollTo({ top: top + p * total, behavior: reduce ? "auto" : "smooth" });
+      const y = top + p * total;
+      if (window.__lenis) window.__lenis.scrollTo(y, { duration: 1.6 });
+      else window.scrollTo({ top: y, behavior: reduce ? "auto" : "smooth" });
     },
     [reduce]
   );

@@ -1,4 +1,5 @@
 import Nav from "@/components/Nav";
+import SmoothScroll from "@/components/SmoothScroll";
 import RoadHero from "@/components/road/RoadHero";
 import FadeIn from "@/components/FadeIn";
 import Flow from "@/components/Flow";
@@ -31,6 +32,7 @@ export default function Home() {
 
   return (
     <>
+      <SmoothScroll />
       <Nav />
       <main id="top">
         <RoadHero />

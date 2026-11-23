@@ -1,6 +1,8 @@
 "use client";
 
 import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
+import { Environment, Lightformer, PerformanceMonitor, RoundedBox } from "@react-three/drei";
+import { Bloom, EffectComposer, N8AO, Vignette } from "@react-three/postprocessing";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type MutableRefObject } from "react";
 import * as THREE from "three";
 import { STOPS, roadPosition } from "@/lib/stops";
@@ -91,27 +93,29 @@ function linesTexture(bg: string, ink: string, rows: number, code = false) {
 }
 
 /* ── Static scenery ─────────────────────────────────────── */
-function Road() {
-  const { ribbon, dashes } = useMemo(() => {
-    const N = 600;
-    const pos: number[] = [];
-    const idx: number[] = [];
-    const W = 1.9;
-    for (let i = 0; i <= N; i++) {
-      const u = i / N;
-      const p = CURVE.getPointAt(u);
-      const l = leftOf(CURVE.getTangentAt(u));
-      pos.push(p.x + l.x * W, 0.02, p.z + l.z * W, p.x - l.x * W, 0.02, p.z - l.z * W);
-      if (i < N) {
-        const a = i * 2;
-        idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2);
-      }
+/** A flat strip that follows the road between two signed offsets from its centre line. */
+function ribbon(a: number, b: number, y: number, N = 700) {
+  const pos: number[] = [];
+  const idx: number[] = [];
+  for (let i = 0; i <= N; i++) {
+    const u = i / N;
+    const p = CURVE.getPointAt(u);
+    const l = leftOf(CURVE.getTangentAt(u));
+    pos.push(p.x + l.x * a, y, p.z + l.z * a, p.x + l.x * b, y, p.z + l.z * b);
+    if (i < N) {
+      const k = i * 2;
+      idx.push(k, k + 1, k + 2, k + 1, k + 3, k + 2);
     }
-    const ribbon = new THREE.BufferGeometry();
-    ribbon.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
-    ribbon.setIndex(idx);
-    ribbon.computeVertexNormals();
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+  g.setIndex(idx);
+  g.computeVertexNormals();
+  return g;
+}
 
+function Road() {
+  const { shoulder, asphalt, edgeL, edgeR, dashes } = useMemo(() => {
     const count = Math.floor(LEN / 3);
     const dashes: THREE.Matrix4[] = [];
     const q = new THREE.Quaternion();
@@ -120,9 +124,15 @@ function Road() {
       const p = CURVE.getPointAt(u);
       const t = CURVE.getTangentAt(u);
       q.setFromAxisAngle(UP, Math.atan2(t.x, t.z));
-      dashes.push(new THREE.Matrix4().compose(new THREE.Vector3(p.x, 0.04, p.z), q, new THREE.Vector3(1, 1, 1)));
+      dashes.push(new THREE.Matrix4().compose(new THREE.Vector3(p.x, 0.045, p.z), q, new THREE.Vector3(1, 1, 1)));
     }
-    return { ribbon, dashes };
+    return {
+      shoulder: ribbon(2.7, -2.7, 0.012),
+      asphalt: ribbon(2.05, -2.05, 0.025),
+      edgeL: ribbon(1.85, 1.68, 0.035),
+      edgeR: ribbon(-1.68, -1.85, 0.035),
+      dashes,
+    };
   }, []);
 
   const dashRef = useRef<THREE.InstancedMesh>(null);
@@ -133,62 +143,156 @@ function Road() {
 
   return (
     <>
-      <mesh geometry={ribbon} receiveShadow>
-        <meshStandardMaterial color={ROAD} roughness={0.9} side={THREE.DoubleSide} />
+      <mesh geometry={shoulder} receiveShadow>
+        <meshStandardMaterial color="#e3dcc8" roughness={1} side={THREE.DoubleSide} />
       </mesh>
-      <instancedMesh ref={dashRef} args={[undefined, undefined, dashes.length]}>
+      <mesh geometry={asphalt} receiveShadow>
+        <meshStandardMaterial color={ROAD} roughness={0.82} side={THREE.DoubleSide} />
+      </mesh>
+      {[edgeL, edgeR].map((g, i) => (
+        <mesh key={i} geometry={g} receiveShadow>
+          <meshStandardMaterial color="#f4f1e6" roughness={0.7} side={THREE.DoubleSide} />
+        </mesh>
+      ))}
+      <instancedMesh ref={dashRef} args={[undefined, undefined, dashes.length]} receiveShadow>
         <boxGeometry args={[0.16, 0.02, 1.3]} />
-        <meshStandardMaterial color="#f4f1e6" roughness={0.8} />
+        <meshStandardMaterial color="#ffd166" roughness={0.6} />
       </instancedMesh>
     </>
   );
 }
 
-function Trees({ count }: { count: number }) {
-  const data = useMemo(() => {
-    const r = rng(42);
-    const samples = Array.from({ length: 160 }, (_, i) => CURVE.getPointAt(i / 159));
-    const out: { x: number; z: number; s: number; c: number }[] = [];
-    let guard = 0;
-    while (out.length < count && guard++ < count * 30) {
-      const x = -50 + r() * 160;
-      const z = -170 + r() * 210;
-      const nearRoad = samples.some((p) => (p.x - x) ** 2 + (p.z - z) ** 2 < 130);
-      const nearSite = SITES.some((s) => (s.building.x - x) ** 2 + (s.building.z - z) ** 2 < 70);
-      if (nearRoad || nearSite) continue;
-      out.push({ x, z, s: 0.7 + r() * 0.9, c: r() });
+/** Ground with soft colour patches, so the meadow is not one flat green. */
+function Ground() {
+  const geo = useMemo(() => {
+    const g = new THREE.PlaneGeometry(460, 460, 140, 140);
+    g.rotateX(-Math.PI / 2);
+    const pos = g.attributes.position;
+    const col: number[] = [];
+    const a = new THREE.Color(GRASS);
+    const b = new THREE.Color("#93cc78");
+    const c = new THREE.Color("#bfe39c");
+    const tmp = new THREE.Color();
+    for (let i = 0; i < pos.count; i++) {
+      const x = pos.getX(i) + 25;
+      const z = pos.getZ(i) - 60;
+      const n = Math.sin(x * 0.06) * Math.cos(z * 0.05) + 0.5 * Math.sin((x + z) * 0.11) + 0.25 * Math.cos(x * 0.21 - z * 0.17);
+      tmp.copy(a);
+      if (n > 0.35) tmp.lerp(b, Math.min(1, (n - 0.35) * 1.4));
+      else if (n < -0.4) tmp.lerp(c, Math.min(1, (-0.4 - n) * 1.4));
+      col.push(tmp.r, tmp.g, tmp.b);
     }
-    return out;
+    g.setAttribute("color", new THREE.Float32BufferAttribute(col, 3));
+    return g;
+  }, []);
+  return (
+    <mesh geometry={geo} position={[25, 0, -60]} receiveShadow>
+      <meshStandardMaterial vertexColors roughness={1} />
+    </mesh>
+  );
+}
+
+/** A gradient sky dome: deeper blue overhead, soft haze at the horizon. */
+function Sky() {
+  const mat = useMemo(
+    () =>
+      new THREE.ShaderMaterial({
+        side: THREE.BackSide,
+        depthWrite: false,
+        fog: false,
+        uniforms: {
+          top: { value: new THREE.Color("#6fb6ea") },
+          mid: { value: new THREE.Color("#b9def5") },
+          bottom: { value: new THREE.Color(SKY) },
+        },
+        vertexShader:
+          "varying vec3 vP; void main(){ vP = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }",
+        fragmentShader:
+          "uniform vec3 top; uniform vec3 mid; uniform vec3 bottom; varying vec3 vP; void main(){ float h = clamp(vP.y, 0.0, 1.0); vec3 c = mix(bottom, mid, smoothstep(0.0, 0.18, h)); c = mix(c, top, smoothstep(0.18, 0.75, h)); gl_FragColor = vec4(c, 1.0); }",
+      }),
+    []
+  );
+  const ref = useRef<THREE.Mesh>(null);
+  // Keep the dome centred on the camera so it never clips.
+  useFrame(({ camera }) => ref.current?.position.copy(camera.position));
+  return (
+    <mesh ref={ref} material={mat} scale={220} renderOrder={-1} frustumCulled={false}>
+      <sphereGeometry args={[1, 32, 16]} />
+    </mesh>
+  );
+}
+
+function Trees({ count }: { count: number }) {
+  const { data, pines, rounds } = useMemo(() => {
+    const r = rng(42);
+    const samples = Array.from({ length: 200 }, (_, i) => CURVE.getPointAt(i / 199));
+    const out: { x: number; z: number; s: number; c: number; round: boolean; rot: number }[] = [];
+    let guard = 0;
+    while (out.length < count && guard++ < count * 40) {
+      const x = -55 + r() * 170;
+      const z = -175 + r() * 215;
+      const nearRoad = samples.some((p) => (p.x - x) ** 2 + (p.z - z) ** 2 < 130);
+      const nearSite = SITES.some((s) => (s.building.x - x) ** 2 + (s.building.z - z) ** 2 < 75);
+      if (nearRoad || nearSite) continue;
+      out.push({ x, z, s: 0.75 + r() * 0.85, c: r(), round: r() < 0.35, rot: r() * Math.PI });
+    }
+    return { data: out, pines: out.filter((d) => !d.round), rounds: out.filter((d) => d.round) };
   }, [count]);
 
-  const leaves = useRef<THREE.InstancedMesh>(null);
+  const low = useRef<THREE.InstancedMesh>(null);
+  const top = useRef<THREE.InstancedMesh>(null);
+  const ball = useRef<THREE.InstancedMesh>(null);
   const trunks = useRef<THREE.InstancedMesh>(null);
+
   useLayoutEffect(() => {
     const m = new THREE.Matrix4();
+    const q = new THREE.Quaternion();
     const col = new THREE.Color();
-    const greens = ["#3f9a4f", "#4fae5a", "#2f8a52", "#69b85a"];
+    const pineGreens = ["#2f8a52", "#3f9a4f", "#2a7d4a", "#4aa35a"];
+    const roundGreens = ["#6cbf5a", "#7fca63", "#5fb257", "#93d16d"];
+    pines.forEach((t, i) => {
+      q.setFromAxisAngle(UP, t.rot);
+      const sc = new THREE.Vector3(t.s, t.s, t.s);
+      m.compose(new THREE.Vector3(t.x, 1.7 * t.s, t.z), q, sc);
+      low.current?.setMatrixAt(i, m);
+      low.current?.setColorAt(i, col.set(pineGreens[Math.floor(t.c * 4)]));
+      m.compose(new THREE.Vector3(t.x, 3.0 * t.s, t.z), q, sc.clone().multiplyScalar(0.72));
+      top.current?.setMatrixAt(i, m);
+      top.current?.setColorAt(i, col.set(pineGreens[Math.floor(t.c * 4)]).offsetHSL(0, 0, 0.05));
+    });
+    rounds.forEach((t, i) => {
+      q.setFromAxisAngle(UP, t.rot);
+      m.compose(new THREE.Vector3(t.x, 2.3 * t.s, t.z), q, new THREE.Vector3(t.s, t.s * 1.05, t.s));
+      ball.current?.setMatrixAt(i, m);
+      ball.current?.setColorAt(i, col.set(roundGreens[Math.floor(t.c * 4)]));
+    });
     data.forEach((t, i) => {
-      m.compose(new THREE.Vector3(t.x, 1.9 * t.s, t.z), new THREE.Quaternion(), new THREE.Vector3(t.s, t.s, t.s));
-      leaves.current?.setMatrixAt(i, m);
-      leaves.current?.setColorAt(i, col.set(greens[Math.floor(t.c * greens.length)]));
-      m.compose(new THREE.Vector3(t.x, 0.5 * t.s, t.z), new THREE.Quaternion(), new THREE.Vector3(t.s, t.s, t.s));
+      m.compose(new THREE.Vector3(t.x, 0.6 * t.s, t.z), q.identity(), new THREE.Vector3(t.s, t.s * 1.2, t.s));
       trunks.current?.setMatrixAt(i, m);
     });
-    [leaves.current, trunks.current].forEach((x) => {
+    [low.current, top.current, ball.current, trunks.current].forEach((x) => {
       if (!x) return;
       x.instanceMatrix.needsUpdate = true;
       if (x.instanceColor) x.instanceColor.needsUpdate = true;
     });
-  }, [data]);
+  }, [data, pines, rounds]);
 
   return (
     <>
-      <instancedMesh ref={leaves} args={[undefined, undefined, data.length]} castShadow>
-        <coneGeometry args={[1.1, 2.8, 7]} />
-        <meshStandardMaterial flatShading roughness={0.8} />
+      <instancedMesh ref={low} args={[undefined, undefined, pines.length]} castShadow receiveShadow>
+        <coneGeometry args={[1.25, 2.4, 8]} />
+        <meshStandardMaterial flatShading roughness={0.85} />
       </instancedMesh>
-      <instancedMesh ref={trunks} args={[undefined, undefined, data.length]}>
-        <cylinderGeometry args={[0.16, 0.2, 1, 6]} />
+      <instancedMesh ref={top} args={[undefined, undefined, pines.length]} castShadow receiveShadow>
+        <coneGeometry args={[1.05, 2, 8]} />
+        <meshStandardMaterial flatShading roughness={0.85} />
+      </instancedMesh>
+      <instancedMesh ref={ball} args={[undefined, undefined, rounds.length]} castShadow receiveShadow>
+        <icosahedronGeometry args={[1.35, 1]} />
+        <meshStandardMaterial flatShading roughness={0.85} />
+      </instancedMesh>
+      <instancedMesh ref={trunks} args={[undefined, undefined, data.length]} castShadow>
+        <cylinderGeometry args={[0.14, 0.22, 1, 6]} />
         <meshStandardMaterial color="#8a5a3c" roughness={0.9} />
       </instancedMesh>
     </>
@@ -531,7 +635,7 @@ function StopSite({ i, active, still, onPick }: { i: number; active: boolean; st
 
 /* ── The car, the camera and the sun ────────────────────── */
 function Car({ progress, carRef, still }: { progress: MutableRefObject<number>; carRef: MutableRefObject<THREE.Group | null>; still: boolean }) {
-  const wheels = useRef<(THREE.Mesh | null)[]>([]);
+  const wheels = useRef<(THREE.Group | null)[]>([]);
   const body = useRef<THREE.Group>(null);
   const u = useRef(roadPosition(progress.current));
   const tmpT = useMemo(() => new THREE.Vector3(), []);
@@ -541,7 +645,7 @@ function Car({ progress, carRef, still }: { progress: MutableRefObject<number>; 
     if (!g) return;
     const target = roadPosition(progress.current);
     const prev = u.current;
-    u.current = still ? target : THREE.MathUtils.damp(u.current, target, 3.2, dt);
+    u.current = still ? target : THREE.MathUtils.damp(u.current, target, 2.6, dt);
     g.userData.u = u.current;
     const du = u.current - prev;
     const p = CURVE.getPointAt(Math.min(Math.max(u.current, 0), 1));
@@ -549,58 +653,77 @@ function Car({ progress, carRef, still }: { progress: MutableRefObject<number>; 
     if (du < 0) tmpT.negate();
     g.position.set(p.x, 0, p.z);
     const yaw = Math.atan2(tmpT.x, tmpT.z);
-    // Smallest-angle turn.
+    // Smallest-angle turn, eased.
     let d = yaw - g.rotation.y;
     d = Math.atan2(Math.sin(d), Math.cos(d));
-    g.rotation.y += d * Math.min(1, dt * 10);
+    g.rotation.y += d * (1 - Math.exp(-dt * 9));
     const dist = Math.abs(du) * LEN;
     wheels.current.forEach((w) => w && (w.rotation.x += dist / 0.42));
     if (body.current) {
       const speed = dist / Math.max(dt, 1e-4);
-      body.current.position.y = 0.62 + (still ? 0 : Math.sin(s.clock.elapsedTime * 18) * Math.min(speed, 12) * 0.004);
-      body.current.rotation.x = THREE.MathUtils.damp(body.current.rotation.x, -Math.min(speed, 14) * 0.006, 6, dt);
+      // Gentle suspension: a little bounce at speed, a lean into turns, a squat when accelerating.
+      body.current.position.y = 0.62 + (still ? 0 : Math.sin(s.clock.elapsedTime * 16) * Math.min(speed, 12) * 0.003);
+      body.current.rotation.x = THREE.MathUtils.damp(body.current.rotation.x, -Math.min(speed, 14) * 0.005, 5, dt);
+      body.current.rotation.z = THREE.MathUtils.damp(body.current.rotation.z, still ? 0 : -d * 0.35, 5, dt);
     }
   });
 
-  const wheelPos: [number, number, number][] = [[-0.85, 0.42, 0.85], [0.85, 0.42, 0.85], [-0.85, 0.42, -0.85], [0.85, 0.42, -0.85]];
+  const paint = useMemo(
+    () => new THREE.MeshPhysicalMaterial({ color: CAR, roughness: 0.32, metalness: 0.15, clearcoat: 1, clearcoatRoughness: 0.12 }),
+    []
+  );
+  const white = useMemo(() => new THREE.MeshPhysicalMaterial({ color: "#fbfbf8", roughness: 0.35, clearcoat: 0.6 }), []);
+  const glass = useMemo(() => new THREE.MeshPhysicalMaterial({ color: "#1e2a38", roughness: 0.08, metalness: 0.4, clearcoat: 1 }), []);
+
+  const wheelPos: [number, number, number][] = [[-0.86, 0.42, 0.9], [0.86, 0.42, 0.9], [-0.86, 0.42, -0.9], [0.86, 0.42, -0.9]];
   return (
     <group ref={carRef}>
       <group ref={body} position={[0, 0.62, 0]}>
-        <mesh castShadow>
-          <boxGeometry args={[1.7, 0.6, 3]} />
-          <meshStandardMaterial color={CAR} flatShading roughness={0.5} />
+        <RoundedBox args={[1.72, 0.62, 3.05]} radius={0.2} smoothness={4} material={paint} castShadow receiveShadow />
+        <RoundedBox args={[1.48, 0.6, 1.65]} radius={0.22} smoothness={4} position={[0, 0.56, -0.22]} material={white} castShadow />
+        {/* Glass: windscreen, rear window and side windows */}
+        <mesh position={[0, 0.6, 0.62]} rotation={[-0.25, 0, 0]} material={glass}>
+          <boxGeometry args={[1.32, 0.42, 0.04]} />
         </mesh>
-        <mesh position={[0, 0.55, -0.2]} castShadow>
-          <boxGeometry args={[1.45, 0.55, 1.6]} />
-          <meshStandardMaterial color="#ffffff" flatShading />
+        <mesh position={[0, 0.6, -1.06]} rotation={[0.2, 0, 0]} material={glass}>
+          <boxGeometry args={[1.3, 0.38, 0.04]} />
         </mesh>
-        <mesh position={[0, 0.55, 0.62]}>
-          <boxGeometry args={[1.3, 0.42, 0.04]} />
-          <meshStandardMaterial color="#26313f" roughness={0.2} metalness={0.3} />
-        </mesh>
-        {[-0.55, 0.55].map((x) => (
-          <mesh key={`h${x}`} position={[x, 0, 1.51]}>
-            <boxGeometry args={[0.36, 0.2, 0.04]} />
-            <meshBasicMaterial color="#fff4c2" toneMapped={false} />
+        {[-0.75, 0.75].map((x) => (
+          <mesh key={`w${x}`} position={[x, 0.62, -0.22]} material={glass}>
+            <boxGeometry args={[0.04, 0.34, 1.3]} />
           </mesh>
         ))}
-        {[-0.6, 0.6].map((x) => (
-          <mesh key={`t${x}`} position={[x, 0.05, -1.51]}>
-            <boxGeometry args={[0.34, 0.16, 0.04]} />
+        {/* Bumpers */}
+        <RoundedBox args={[1.6, 0.18, 0.18]} radius={0.07} position={[0, -0.2, 1.52]} material={white} />
+        <RoundedBox args={[1.6, 0.18, 0.18]} radius={0.07} position={[0, -0.2, -1.52]} material={white} />
+        {[-0.55, 0.55].map((x) => (
+          <mesh key={`h${x}`} position={[x, 0.05, 1.53]}>
+            <cylinderGeometry args={[0.13, 0.13, 0.05, 16]} />
+            <meshBasicMaterial color="#fff6d0" toneMapped={false} />
+          </mesh>
+        ))}
+        {[-0.58, 0.58].map((x) => (
+          <mesh key={`t${x}`} position={[x, 0.08, -1.53]}>
+            <boxGeometry args={[0.36, 0.14, 0.04]} />
             <meshBasicMaterial color="#ff3b30" toneMapped={false} />
           </mesh>
         ))}
-        {/* Roof sign */}
-        <mesh position={[0, 1.02, -0.2]} castShadow>
-          <boxGeometry args={[0.9, 0.34, 0.12]} />
-          <meshStandardMaterial color="#ffc23d" />
-        </mesh>
+        {/* Roof sign: the car carries the initials */}
+        <RoundedBox args={[0.95, 0.36, 0.14]} radius={0.06} position={[0, 1.04, -0.22]} castShadow>
+          <meshStandardMaterial color="#ffc23d" roughness={0.4} />
+        </RoundedBox>
       </group>
       {wheelPos.map((w, i) => (
-        <mesh key={i} ref={(m) => { wheels.current[i] = m; }} position={w} rotation={[0, 0, Math.PI / 2]} castShadow>
-          <cylinderGeometry args={[0.42, 0.42, 0.34, 14]} />
-          <meshStandardMaterial color="#1f2630" flatShading />
-        </mesh>
+        <group key={i} ref={(m) => { wheels.current[i] = m; }} position={w}>
+          <mesh rotation={[0, 0, Math.PI / 2]} castShadow>
+            <cylinderGeometry args={[0.42, 0.42, 0.34, 24]} />
+            <meshStandardMaterial color="#1c222b" roughness={0.75} />
+          </mesh>
+          <mesh rotation={[0, 0, Math.PI / 2]} position={[w[0] > 0 ? 0.08 : -0.08, 0, 0]}>
+            <cylinderGeometry args={[0.22, 0.22, 0.22, 16]} />
+            <meshStandardMaterial color="#e9edf2" metalness={0.6} roughness={0.25} />
+          </mesh>
+        </group>
       ))}
     </group>
   );
@@ -690,8 +813,9 @@ function Rig({ carRef, active, still, mobile }: { carRef: MutableRefObject<THREE
       camera.position.copy(tmp.cam);
       look.current.lerpVectors(new THREE.Vector3(28, 0, -55), tmp.at, k);
     } else {
-      camera.position.lerp(tmp.cam, Math.min(1, dt * 3));
-      look.current.lerp(tmp.at, Math.min(1, dt * 3));
+      const ease = 1 - Math.exp(-dt * 2.6);
+      camera.position.lerp(tmp.cam, ease);
+      look.current.lerp(tmp.at, ease);
     }
     camera.lookAt(look.current);
 
@@ -720,25 +844,61 @@ function Rig({ carRef, active, still, mobile }: { carRef: MutableRefObject<THREE
   );
 }
 
-function Scene({ progress, active, onPick, still, mobile }: { progress: MutableRefObject<number>; active: number; onPick: (i: number) => void; still: boolean; mobile: boolean }) {
+/** Soft studio-style reflections without downloading an HDR: a few light panels baked once. */
+function Lighting() {
+  return (
+    <Environment resolution={256} frames={1}>
+      <Lightformer intensity={2.2} color="#fff6e6" position={[0, 8, -6]} scale={[20, 6, 1]} />
+      <Lightformer intensity={1.2} color="#cde8ff" position={[-10, 4, 6]} rotation-y={Math.PI / 2} scale={[14, 4, 1]} />
+      <Lightformer intensity={0.8} color="#ffe2c6" position={[10, 3, 4]} rotation-y={-Math.PI / 2} scale={[14, 4, 1]} />
+      <Lightformer form="ring" intensity={1.5} color="#ffffff" position={[0, 12, 0]} rotation-x={Math.PI / 2} scale={6} />
+    </Environment>
+  );
+}
+
+function Effects() {
+  return (
+    <EffectComposer multisampling={4}>
+      <N8AO aoRadius={1.8} intensity={2.4} distanceFalloff={1.2} halfRes color="#1f3a2a" />
+      <Bloom luminanceThreshold={0.92} luminanceSmoothing={0.2} intensity={0.45} mipmapBlur />
+      <Vignette offset={0.28} darkness={0.42} />
+    </EffectComposer>
+  );
+}
+
+function Scene({
+  progress,
+  active,
+  onPick,
+  still,
+  mobile,
+  fx,
+}: {
+  progress: MutableRefObject<number>;
+  active: number;
+  onPick: (i: number) => void;
+  still: boolean;
+  mobile: boolean;
+  fx: boolean;
+}) {
   const carRef = useRef<THREE.Group | null>(null);
   return (
     <>
       <color attach="background" args={[SKY]} />
-      <fog attach="fog" args={[SKY, 70, 190]} />
-      <hemisphereLight args={["#ffffff", "#7aa860", 1.05]} />
+      <fog attach="fog" args={[SKY, 75, 200]} />
+      <Sky />
+      <Lighting />
+      <hemisphereLight args={["#ffffff", "#7aa860", 0.55]} />
       <Rig carRef={carRef} active={active} still={still} mobile={mobile} />
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[25, 0, -60]} receiveShadow>
-        <planeGeometry args={[420, 420]} />
-        <meshStandardMaterial color={GRASS} roughness={1} />
-      </mesh>
+      <Ground />
       <Road />
-      <Trees count={mobile ? 90 : 190} />
+      <Trees count={mobile ? 110 : 230} />
       <Clouds still={still} />
       {STOPS.map((s, i) => (
         <StopSite key={s.id} i={i} active={active === i} still={still} onPick={onPick} />
       ))}
       <Car progress={progress} carRef={carRef} still={still} />
+      {fx && <Effects />}
     </>
   );
 }
@@ -755,10 +915,16 @@ export default function World({
   const [ready, setReady] = useState(false);
   const [still, setStill] = useState(false);
   const [mobile, setMobile] = useState(false);
+  const [fx, setFx] = useState(true);
+  const [dpr, setDpr] = useState(1.5);
 
   useEffect(() => {
+    const isMobile = window.matchMedia("(max-width: 720px)").matches;
     setStill(window.matchMedia("(prefers-reduced-motion: reduce)").matches);
-    setMobile(window.matchMedia("(max-width: 720px)").matches);
+    setMobile(isMobile);
+    // Post-processing is a desktop treat; phones get the clean render.
+    setFx(!isMobile);
+    setDpr(Math.min(window.devicePixelRatio || 1, isMobile ? 1.5 : 2));
     // Signboards paint text into canvases, so wait for the web fonts.
     document.fonts.ready.then(() => setReady(true));
   }, []);
@@ -767,13 +933,20 @@ export default function World({
 
   return (
     <Canvas
-      shadows
-      dpr={mobile ? [1, 1.5] : [1, 2]}
-      camera={{ fov: mobile ? 55 : 42, near: 0.5, far: 260, position: [20, 75, 25] }}
-      gl={{ antialias: true }}
+      shadows="soft"
+      dpr={dpr}
+      camera={{ fov: mobile ? 55 : 42, near: 0.5, far: 520, position: [20, 75, 25] }}
+      gl={{ antialias: !fx, powerPreference: "high-performance" }}
       style={{ touchAction: "pan-y" }}
     >
-      <Scene progress={progress} active={active} onPick={onPick} still={still} mobile={mobile} />
+      <PerformanceMonitor
+        onDecline={() => {
+          // Keep it smooth on slower machines: drop the effects first, then resolution.
+          setFx(false);
+          setDpr((d) => Math.max(1, d - 0.5));
+        }}
+      />
+      <Scene progress={progress} active={active} onPick={onPick} still={still} mobile={mobile} fx={fx && !still} />
     </Canvas>
   );
 }
