@@ -4,6 +4,8 @@ import { Children, useEffect, useRef, useState, type ReactNode } from "react";
 import {
   animate,
   motion,
+  useAnimationFrame,
+  useMotionValue,
   useInView,
   useMotionValueEvent,
   useReducedMotion,
@@ -107,16 +109,46 @@ function Word({
 /** An endless, tilted ticker band. */
 export function Ticker({ items, tone = "tangerine", tilt = -2.5 }: { items: string[]; tone?: "tangerine" | "mint" | "ink"; tilt?: number }) {
   const row = [...items, ...items];
+  const reduce = useReducedMotion();
+  const x = useMotionValue(0);
+  const { scrollY } = useScroll();
+  const v = useVelocity(scrollY);
+  const boost = useSpring(useTransform(v, [-3000, 0, 3000], [-6, 0, 6], { clamp: false }), { damping: 40, stiffness: 300 });
+  const skew = useTransform(boost, [-6, 0, 6], [6, 0, -6]);
+  const dir = useRef(1);
+  const hover = useRef(false);
+
+  // Drifts left forever; scrolling speeds it up, and scrolling up reverses it.
+  useAnimationFrame((_, delta) => {
+    if (reduce) return;
+    const b = boost.get();
+    if (b < -0.05) dir.current = -1;
+    else if (b > 0.05) dir.current = 1;
+    const speed = hover.current ? 0.25 : 1;
+    let next = x.get() - dir.current * (2.2 + Math.abs(b) * 3) * speed * (delta / 1000) * 1.2;
+    // The track holds the items twice, so wrap at half its width (expressed in %).
+    if (next <= -50) next += 50;
+    if (next > 0) next -= 50;
+    x.set(next);
+  });
+  const tx = useTransform(x, (p) => `${p}%`);
+
   return (
-    <div className={`ticker ticker--${tone}`} style={{ rotate: `${tilt}deg` }} aria-label={items.join(". ")}>
-      <div className="ticker__track" aria-hidden>
+    <div
+      className={`ticker ticker--${tone}`}
+      style={{ rotate: `${tilt}deg` }}
+      aria-label={items.join(". ")}
+      onPointerEnter={() => (hover.current = true)}
+      onPointerLeave={() => (hover.current = false)}
+    >
+      <motion.div className="ticker__track" aria-hidden style={{ x: tx, skewX: skew }}>
         {row.map((t, i) => (
           <span key={i}>
             {t}
             <i className="ticker__dot" />
           </span>
         ))}
-      </div>
+      </motion.div>
     </div>
   );
 }

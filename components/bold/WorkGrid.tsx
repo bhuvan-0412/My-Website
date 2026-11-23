@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useState } from "react";
 import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
 import { projects, projectMeta, type Kind } from "@/data/site";
+import { Tilt, Wipe } from "./Media";
 
 const FILTERS: ("All" | Kind)[] = ["All", "AI", "Product", "Web", "Hackathon"];
 const ease = [0.16, 1, 0.3, 1] as const;
@@ -42,10 +43,14 @@ export default function WorkGrid() {
                 exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.25 } }}
                 transition={{ duration: 0.7, ease, delay: i * 0.04 }}
               >
-                <div className={`work__img ${meta?.image ? "" : "work__img--flow"}`}>
-                  {meta?.image ? (
+                <Tilt className="work__card">
+                {meta?.image ? (
+                  <Wipe className="work__img">
                     <Image src={meta.image} alt={`${p.title} home page`} width={1280} height={800} sizes="(max-width: 720px) 100vw, 50vw" />
-                  ) : (
+                  </Wipe>
+                ) : (
+                <div className="work__img work__img--flow">
+                  {(
                     <ol className="mini-flow" aria-label="How it works">
                       {p.flow.map((s) => (
                         <li key={s}>{s}</li>
@@ -53,6 +58,7 @@ export default function WorkGrid() {
                     </ol>
                   )}
                 </div>
+                )}
                 <div className="work__body">
                   <div className="work__head">
                     <h2 className="display">{p.title}</h2>
@@ -76,6 +82,7 @@ export default function WorkGrid() {
                     ))}
                   </div>
                 </div>
+                </Tilt>
               </motion.article>
             );
           })}

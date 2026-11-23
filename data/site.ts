@@ -252,7 +252,7 @@ export const areas: { title: string; text: string; tags: string[] }[] = [
   },
   {
     title: "Content",
-    text: "I script, film and edit reels that explain product ideas in under a minute.",
+    text: "I make and edit short reels that explain product ideas in under a minute.",
     tags: ["Reels", "Editing", "Storytelling"],
   },
 ];

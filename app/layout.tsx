@@ -5,9 +5,10 @@ import SmoothScroll from "@/components/SmoothScroll";
 import Header from "@/components/bold/Header";
 import Footer from "@/components/bold/Footer";
 import ArtifactsLayer from "@/components/bold/ArtifactsLayer";
+import Cursor from "@/components/bold/Cursor";
 import "./globals.css";
 
-const display = Big_Shoulders({ subsets: ["latin"], variable: "--font-display", weight: ["700", "800", "900"] });
+const display = Big_Shoulders({ subsets: ["latin"], variable: "--font-display", weight: ["700", "800", "900"], adjustFontFallback: false });
 const body = Figtree({ subsets: ["latin"], variable: "--font-body" });
 const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" });
 
@@ -29,6 +30,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ArtifactsLayer />
         <main id="top">{children}</main>
         <Footer />
+        <Cursor />
       </body>
     </html>
   );

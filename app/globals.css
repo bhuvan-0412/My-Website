@@ -214,13 +214,12 @@ main { position: relative; }
 .ticker--tangerine { background: var(--tangerine); color: var(--ink); }
 .ticker--mint { background: var(--mint); color: var(--ink); }
 .ticker--ink { background: var(--ink); color: var(--paper); }
-.ticker__track { display: flex; width: max-content; animation: marquee 48s linear infinite; }
+.ticker__track { display: flex; width: max-content; will-change: transform; }
 .ticker__track span {
   display: inline-flex; align-items: center; gap: 28px; padding-right: 28px;
   font-family: var(--font-display), sans-serif; font-weight: 900; text-transform: uppercase; font-size: clamp(1.4rem, 2.6vw, 2.3rem); white-space: nowrap;
 }
 .ticker__dot { width: 10px; height: 10px; border-radius: 50%; background: currentColor; display: inline-block; }
-.ticker:hover .ticker__track { animation-play-state: paused; }
 @keyframes marquee { to { transform: translateX(-50%); } }
 
 /* Statement */
@@ -336,10 +335,11 @@ main { position: relative; }
 .chip.is-on { color: var(--paper); }
 .chip sup { font-size: 0.7em; opacity: 0.6; margin-left: 2px; }
 .work { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
-.work__item { display: flex; flex-direction: column; border-radius: 28px; background: var(--white); overflow: hidden; box-shadow: 0 1px 0 var(--line-light), 0 24px 50px -36px rgba(13, 19, 33, 0.5); }
+.work__item { height: 100%; }
+.work__card { display: flex; flex-direction: column; height: 100%; border-radius: 28px; background: var(--white); overflow: hidden; box-shadow: 0 1px 0 var(--line-light), 0 24px 50px -36px rgba(13, 19, 33, 0.5); }
 .work__img { margin: 12px 12px 0; border-radius: 18px; overflow: hidden; aspect-ratio: 16 / 10; background: var(--ink); }
 .work__img img { width: 100%; height: 100%; object-fit: cover; object-position: top; transition: transform 0.9s var(--ease-out); }
-.work__item:hover .work__img img { transform: scale(1.04); }
+.work__card:hover .work__img img { transform: scale(1.04); }
 .work__img--flow { display: grid; place-items: center; padding: 24px; background: var(--ink); }
 .mini-flow { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px 6px; counter-reset: s; }
 .mini-flow li { display: inline-flex; align-items: center; gap: 6px; color: var(--paper); font-weight: 600; font-size: 0.9rem; }
@@ -458,4 +458,30 @@ main { position: relative; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition-duration: 0.01ms !important; }
+}
+
+/* ── Media helpers ──────────────────────────────────────── */
+.wipe { width: 100%; height: 100%; overflow: hidden; }
+.wipe__in { width: 100%; height: 100%; }
+.tilt { transition: transform 0.5s var(--ease-out); transform-style: preserve-3d; will-change: transform; }
+
+/* ── Custom cursor (mouse only) ─────────────────────────── */
+html.has-cursor, html.has-cursor * { cursor: none !important; }
+html.has-cursor input, html.has-cursor textarea { cursor: text !important; }
+.cursor {
+  position: fixed; left: 0; top: 0; z-index: 100; pointer-events: none;
+  display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%;
+  border: 1.5px solid #fff; mix-blend-mode: difference;
+  transition: background 0.3s, border-color 0.3s;
+}
+.cursor span { font-size: 4px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink); opacity: 0; transition: opacity 0.2s; }
+.cursor.has-label { background: var(--mint); border-color: var(--mint); mix-blend-mode: normal; }
+.cursor.has-label span { opacity: 1; }
+.cursor-dot { position: fixed; left: 0; top: 0; z-index: 101; pointer-events: none; width: 6px; height: 6px; border-radius: 50%; background: #fff; mix-blend-mode: difference; }
+.pill, .hdr__logo, .hdr__menu, .hdr__hire, .chip, .area__go, .faq__icon { transition-property: transform, translate, background, color, border-color, box-shadow; }
+
+/* Cards sit above the 3D layer, so artifacts drift behind them but in front of section backgrounds. */
+.work__item, .area, .shot, .stat, .step, .lesson, .kit, .facts, .faq, .contact-link, .reel, .wins li, .hero__foot, .sec__aside, .page-hero__lede, .about-copy, .job, .tl, .filters {
+  position: relative;
+  z-index: 25;
 }

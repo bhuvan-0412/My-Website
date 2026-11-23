@@ -3,6 +3,7 @@ import Image from "next/image";
 import { site, areas, experience, faqs, projects, projectMeta, stats, pmSeries } from "@/data/site";
 import { Chroma, CircleSection, Counter, LineReveal, Rise, RoadmapZone, ScrollBadge, ScrollWords, Stagger, Ticker } from "@/components/bold/Motion";
 import Faq from "@/components/bold/Faq";
+import { Wipe } from "@/components/bold/Media";
 
 const Arrow = () => (
   <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -193,10 +194,10 @@ export default function Home() {
               const meta = projectMeta[p.id];
               const live = p.links[0];
               return (
-                <a key={p.id} className="shot" href={live.url} target="_blank" rel="noreferrer">
-                  <div className="shot__img">
+                <a key={p.id} className="shot" href={live.url} target="_blank" rel="noreferrer" data-cursor="Open">
+                  <Wipe className="shot__img">
                     {meta.image && <Image src={meta.image} alt={`${p.title} home page`} width={1280} height={800} sizes="(max-width: 720px) 100vw, 50vw" />}
-                  </div>
+                  </Wipe>
                   <div className="shot__body">
                     <h3 className="display">{p.title}</h3>
                     <span className="tag tag--mint">{meta.status}</span>
