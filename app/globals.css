@@ -168,7 +168,7 @@ img { display: block; max-width: 100%; height: auto; }
 .curtain__mark { font-family: var(--font-display), sans-serif; font-weight: 900; font-size: clamp(4rem, 12vw, 9rem); color: var(--ink); }
 
 /* ── 3D layer ───────────────────────────────────────────── */
-.artifacts { position: fixed; inset: 0; z-index: 1; pointer-events: none; filter: blur(1.2px); opacity: 0.85; }
+.artifacts { position: fixed; inset: 0; z-index: 1; pointer-events: none; transition: filter 0.2s linear; }
 .artifacts canvas { display: block; }
 
 /* ── Sections ───────────────────────────────────────────── */

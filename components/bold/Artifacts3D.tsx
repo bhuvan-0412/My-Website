@@ -7,129 +7,25 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { samplePoints } from "./symbols";
 
-/* Palette: ink + tangerine + off-white */
+/* Palette: ink + tangerine, with off-white and soft tints of the two */
 const INK = "#0d1321";
-const INK2 = "#1c2742";
 const TAN = "#ff6b2c";
+const TAN_SOFT = "#ffb38f";
 const PAPER = "#f2f4f7";
+const GREY = "#c9cfd9";
 
-/* ── Icon glyphs (AI, product, software), drawn as line art on a canvas ── */
-type Draw = (g: CanvasRenderingContext2D) => void;
-const GLYPHS: Record<string, Draw> = {
-  sparkle: (g) => {
-    const star = (x: number, y: number, r: number) => {
-      g.beginPath();
-      g.moveTo(x, y - r);
-      g.quadraticCurveTo(x, y, x + r, y);
-      g.quadraticCurveTo(x, y, x, y + r);
-      g.quadraticCurveTo(x, y, x - r, y);
-      g.quadraticCurveTo(x, y, x, y - r);
-      g.fill();
-    };
-    star(112, 140, 72);
-    star(186, 70, 30);
-  },
-  neural: (g) => {
-    const L = [[64, 70], [64, 128], [64, 186]];
-    const R = [[192, 96], [192, 160]];
-    L.forEach((a) => R.forEach((b) => { g.beginPath(); g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]); g.stroke(); }));
-    [...L, ...R].forEach(([x, y]) => { g.beginPath(); g.arc(x, y, 18, 0, 7); g.fill(); });
-  },
-  chat: (g) => {
-    g.beginPath();
-    g.roundRect(40, 52, 176, 120, 28);
-    g.moveTo(84, 172);
-    g.lineTo(70, 214);
-    g.lineTo(122, 172);
-    g.stroke();
-    [92, 128, 164].forEach((x) => { g.beginPath(); g.arc(x, 112, 11, 0, 7); g.fill(); });
-  },
-  code: (g) => {
-    g.beginPath();
-    g.moveTo(92, 72); g.lineTo(40, 128); g.lineTo(92, 184);
-    g.moveTo(164, 72); g.lineTo(216, 128); g.lineTo(164, 184);
-    g.moveTo(144, 56); g.lineTo(112, 200);
-    g.stroke();
-  },
-  terminal: (g) => {
-    g.beginPath();
-    g.roundRect(36, 52, 184, 152, 20);
-    g.moveTo(70, 100); g.lineTo(106, 128); g.lineTo(70, 156);
-    g.moveTo(124, 160); g.lineTo(180, 160);
-    g.stroke();
-  },
-  branch: (g) => {
-    g.beginPath();
-    g.moveTo(80, 60); g.lineTo(80, 196);
-    g.moveTo(80, 160); g.bezierCurveTo(80, 120, 176, 130, 176, 92);
-    g.stroke();
-    [[80, 60], [80, 196], [176, 80]].forEach(([x, y]) => { g.beginPath(); g.arc(x, y, 20, 0, 7); g.fill(); });
-  },
-  database: (g) => {
-    g.beginPath();
-    g.ellipse(128, 70, 76, 26, 0, 0, 7);
-    g.moveTo(52, 70); g.lineTo(52, 186);
-    g.moveTo(204, 70); g.lineTo(204, 186);
-    g.stroke();
-    [128, 186].forEach((y) => { g.beginPath(); g.ellipse(128, y, 76, 26, 0, 0, Math.PI); g.stroke(); });
-  },
-  target: (g) => {
-    [84, 52, 20].forEach((r, i) => { g.beginPath(); g.arc(128, 128, r, 0, 7); if (i === 2) g.fill(); else g.stroke(); });
-  },
-  bulb: (g) => {
-    g.beginPath();
-    g.arc(128, 104, 58, Math.PI * 0.8, Math.PI * 2.2);
-    g.lineTo(156, 176); g.lineTo(100, 176); g.closePath();
-    g.moveTo(104, 204); g.lineTo(152, 204);
-    g.stroke();
-  },
-  kanban: (g) => {
-    [[44, 3], [104, 2], [164, 1]].forEach(([x, n]) => {
-      for (let i = 0; i < n; i++) { g.beginPath(); g.roundRect(x, 52 + i * 52, 48, 40, 10); g.fill(); }
-    });
-  },
-  chart: (g) => {
-    [[52, 150, 54], [100, 120, 84], [148, 96, 108]].forEach(([x, y, h]) => { g.beginPath(); g.roundRect(x, y, 34, h, 6); g.fill(); });
-    g.beginPath(); g.moveTo(44, 120); g.lineTo(108, 76); g.lineTo(150, 96); g.lineTo(212, 48); g.stroke();
-  },
-  flag: (g) => {
-    g.beginPath(); g.moveTo(72, 212); g.lineTo(72, 44); g.stroke();
-    g.beginPath(); g.moveTo(72, 48); g.lineTo(200, 80); g.lineTo(72, 124); g.closePath(); g.fill();
-  },
-  user: (g) => {
-    g.beginPath(); g.arc(128, 92, 40, 0, 7); g.stroke();
-    g.beginPath(); g.arc(128, 220, 76, Math.PI * 1.15, Math.PI * 1.85); g.stroke();
-  },
-  check: (g) => {
-    g.beginPath(); g.arc(128, 128, 84, 0, 7); g.stroke();
-    g.beginPath(); g.moveTo(88, 130); g.lineTo(116, 158); g.lineTo(170, 100); g.stroke();
-  },
+type Kind = "sticky" | "cursor" | "phone" | "toggle" | "code";
+
+type Item = {
+  kind: Kind;
+  color: string;
+  /** Scale that brings each artifact to roughly the same footprint. */
+  base: number;
+  size: number;
+  depth: number;
+  phase: number;
+  spin: number;
 };
-const GLYPH_NAMES = Object.keys(GLYPHS);
-
-/* Tile styles: [body colour, glyph colour] */
-const STYLES: [string, string][] = [
-  [INK2, PAPER],
-  [PAPER, INK],
-  [TAN, INK],
-  [INK2, TAN],
-];
-
-function glyphTexture(name: string, color: string) {
-  const cv = document.createElement("canvas");
-  cv.width = cv.height = 256;
-  const g = cv.getContext("2d")!;
-  g.strokeStyle = color;
-  g.fillStyle = color;
-  g.lineWidth = 16;
-  g.lineCap = "round";
-  g.lineJoin = "round";
-  GLYPHS[name](g);
-  const t = new THREE.CanvasTexture(cv);
-  t.colorSpace = THREE.SRGBColorSpace;
-  t.anisotropy = 4;
-  return t;
-}
 
 function rng(seed: number) {
   return () => {
@@ -138,7 +34,124 @@ function rng(seed: number) {
   };
 }
 
-type Tile = { glyph: string; style: number; size: number; depth: number; phase: number; spin: number };
+/* ── The product artifacts ─────────────────────────────── */
+function codeTexture() {
+  const cv = document.createElement("canvas");
+  cv.width = 256;
+  cv.height = 192;
+  const g = cv.getContext("2d")!;
+  g.fillStyle = "#141b2d";
+  g.fillRect(0, 0, 256, 192);
+  [TAN, GREY, GREY].forEach((c, i) => {
+    g.fillStyle = c;
+    g.beginPath();
+    g.arc(20 + i * 18, 18, 6, 0, Math.PI * 2);
+    g.fill();
+  });
+  const r = rng(5);
+  for (let i = 0; i < 8; i++) {
+    const indent = [0, 1, 2, 2, 1, 2, 1, 0][i] * 18;
+    g.fillStyle = [TAN, PAPER, GREY, TAN_SOFT][i % 4];
+    g.fillRect(18 + indent, 44 + i * 17, 40 + r() * (150 - indent), 8);
+  }
+  const t = new THREE.CanvasTexture(cv);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+
+function stickyTexture(color: string) {
+  const cv = document.createElement("canvas");
+  cv.width = 256;
+  cv.height = 256;
+  const g = cv.getContext("2d")!;
+  g.fillStyle = color;
+  g.fillRect(0, 0, 256, 256);
+  g.fillStyle = "rgba(13,19,33,0.28)";
+  [0, 1, 2].forEach((i) => g.fillRect(36, 70 + i * 44, i === 2 ? 110 : 180, 14));
+  g.fillStyle = "rgba(0,0,0,0.06)";
+  g.fillRect(0, 0, 256, 34);
+  const t = new THREE.CanvasTexture(cv);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+
+const cursorShape = (() => {
+  const s = new THREE.Shape();
+  s.moveTo(0, 0);
+  s.lineTo(0, -1.6);
+  s.lineTo(0.42, -1.2);
+  s.lineTo(0.7, -1.85);
+  s.lineTo(0.98, -1.72);
+  s.lineTo(0.7, -1.08);
+  s.lineTo(1.2, -1.08);
+  s.closePath();
+  return s;
+})();
+
+function Artifact({ item, tex }: { item: Item; tex: Record<string, THREE.Texture> }) {
+  switch (item.kind) {
+    case "sticky":
+      return (
+        <RoundedBox args={[1.5, 1.5, 0.08]} radius={0.04} smoothness={2}>
+          <meshStandardMaterial attach="material" map={tex[`sticky-${item.color}`]} roughness={0.55} />
+        </RoundedBox>
+      );
+    case "cursor":
+      return (
+        <mesh position={[-0.6, 0.9, 0]}>
+          <extrudeGeometry args={[cursorShape, { depth: 0.22, bevelEnabled: true, bevelSize: 0.05, bevelThickness: 0.05, bevelSegments: 3 }]} />
+          <meshPhysicalMaterial color={item.color} roughness={0.25} clearcoat={1} />
+        </mesh>
+      );
+    case "phone":
+      return (
+        <group>
+          <RoundedBox args={[1.1, 2.1, 0.16]} radius={0.16} smoothness={4}>
+            <meshPhysicalMaterial color={INK} roughness={0.3} clearcoat={1} />
+          </RoundedBox>
+          <mesh position={[0, 0, 0.085]}>
+            <planeGeometry args={[0.92, 1.85]} />
+            <meshBasicMaterial color={item.color} toneMapped={false} />
+          </mesh>
+          <mesh position={[0, 0.55, 0.09]}>
+            <planeGeometry args={[0.6, 0.12]} />
+            <meshBasicMaterial color={INK} transparent opacity={0.35} />
+          </mesh>
+        </group>
+      );
+    case "toggle":
+      return (
+        <group>
+          <RoundedBox args={[1.7, 0.85, 0.36]} radius={0.17} smoothness={4}>
+            <meshPhysicalMaterial color={item.color} roughness={0.3} clearcoat={0.8} />
+          </RoundedBox>
+          <mesh position={[0.42, 0, 0.12]}>
+            <sphereGeometry args={[0.34, 24, 16]} />
+            <meshPhysicalMaterial color="#ffffff" roughness={0.2} clearcoat={1} />
+          </mesh>
+        </group>
+      );
+    case "code":
+      return (
+        <RoundedBox args={[2.1, 1.55, 0.1]} radius={0.08} smoothness={3}>
+          <meshStandardMaterial attach="material" map={tex.code} roughness={0.4} />
+        </RoundedBox>
+      );
+  }
+}
+
+const KINDS: Kind[] = ["sticky", "code", "cursor", "sticky", "phone", "toggle", "sticky", "cursor"];
+const COLORS: Record<Kind, string[]> = {
+  sticky: [TAN, PAPER, TAN_SOFT, GREY],
+  cursor: [PAPER, TAN],
+  phone: [TAN, PAPER],
+  toggle: [TAN, GREY],
+  code: ["code"],
+};
+const BASE: Record<Kind, number> = { sticky: 0.55, cursor: 0.62, phone: 0.48, toggle: 0.5, code: 0.42 };
+
+/** 0 at the top of the page, 1 once you've scrolled most of the first screen. */
+const scrollMix = () => (typeof window === "undefined" ? 0 : Math.min(1, Math.max(0, window.scrollY / (window.innerHeight * 0.85))));
 
 function Field({ count, mobile, still, shape }: { count: number; mobile: boolean; still: boolean; shape: React.MutableRefObject<string> }) {
   const { camera, size } = useThree();
@@ -148,43 +161,49 @@ function Field({ count, mobile, still, shape }: { count: number; mobile: boolean
   const plane = useMemo(() => new THREE.Plane(new THREE.Vector3(0, 0, 1), 5.5), []);
   const hit = useMemo(() => new THREE.Vector3(), []);
 
-  const tiles = useMemo<Tile[]>(() => {
-    const r = rng(23);
-    return Array.from({ length: count }, (_, i) => ({
-      glyph: GLYPH_NAMES[i % GLYPH_NAMES.length],
-      style: Math.floor(r() * STYLES.length),
-      size: (mobile ? 0.62 : 0.8) + r() * 0.3,
-      depth: -7 + r() * 3.5,
-      phase: r() * 10,
-      spin: (r() - 0.5) * 0.8,
-    }));
+  const tex = useMemo(() => {
+    const t: Record<string, THREE.Texture> = { code: codeTexture() };
+    COLORS.sticky.forEach((c) => (t[`sticky-${c}`] = stickyTexture(c)));
+    return t;
+  }, []);
+
+  const items = useMemo<Item[]>(() => {
+    const r = rng(11);
+    return Array.from({ length: count }, (_, i) => {
+      const kind = KINDS[i % KINDS.length];
+      const pal = COLORS[kind];
+      return {
+        kind,
+        color: pal[Math.floor(r() * pal.length)],
+        base: BASE[kind],
+        size: (mobile ? 0.8 : 1) * (0.9 + r() * 0.35),
+        depth: -7 + r() * 3.5,
+        phase: r() * 10,
+        spin: (r() - 0.5) * 0.9,
+      };
+    });
   }, [count, mobile]);
 
-  const textures = useMemo(() => {
-    const m = new Map<string, THREE.Texture>();
-    tiles.forEach((t) => {
-      const key = `${t.glyph}-${STYLES[t.style][1]}`;
-      if (!m.has(key)) m.set(key, glyphTexture(t.glyph, STYLES[t.style][1]));
-    });
-    return m;
-  }, [tiles]);
-
-  const live = useMemo(
-    () => tiles.map((_, i) => ({ pos: new THREE.Vector3(Math.sin(i * 7.3) * 16, Math.cos(i * 3.1) * 11, -9), vel: new THREE.Vector3(), rot: new THREE.Euler() })),
-    [tiles]
-  );
-  const targets = useRef<THREE.Vector3[]>([]);
-  const lastKey = useRef("");
-  // A fixed shuffle so neighbouring tiles in a symbol show different icons.
-  const shuffle = useMemo(() => {
+  // A fixed shuffle so neighbours in a symbol are different artifacts.
+  const order = useMemo(() => {
     const r = rng(5);
-    const idx = tiles.map((_, i) => i);
+    const idx = items.map((_, i) => i);
     for (let i = idx.length - 1; i > 0; i--) {
       const j = Math.floor(r() * (i + 1));
       [idx[i], idx[j]] = [idx[j], idx[i]];
     }
     return idx;
-  }, [tiles]);
+  }, [items]);
+
+  const live = useMemo(
+    () => items.map((_, i) => ({ pos: new THREE.Vector3(Math.sin(i * 7.3) * 16, Math.cos(i * 3.1) * 11, -9), vel: new THREE.Vector3(), rot: new THREE.Euler() })),
+    [items]
+  );
+  /** Symbol layout relative to its centre. */
+  const local = useRef<THREE.Vector3[]>([]);
+  const lastKey = useRef("");
+  const mix = useRef(scrollMix());
+  const view = useRef({ w: 1, h: 1 });
 
   useEffect(() => {
     const move = (e: PointerEvent) => pointer.current.set((e.clientX / window.innerWidth) * 2 - 1, -(e.clientY / window.innerHeight) * 2 + 1);
@@ -201,24 +220,29 @@ function Field({ count, mobile, still, shape }: { count: number; mobile: boolean
     const t = state.clock.elapsedTime;
     const cam = camera as THREE.PerspectiveCamera;
 
-    // Rebuild the targets when the section (and so the symbol) or the screen size changes.
     const key = `${shape.current}-${size.width}x${size.height}`;
     if (key !== lastKey.current) {
       lastKey.current = key;
       const dist = cam.position.z + 5.5;
       const visH = 2 * dist * Math.tan(THREE.MathUtils.degToRad(cam.fov / 2));
       const visW = visH * (size.width / size.height);
+      view.current = { w: visW, h: visH };
       const scale = mobile ? Math.min(visW * 0.36, visH * 0.22) : visH * 0.34;
-      const cx = mobile ? 0 : visW * 0.24;
-      const cy = mobile ? visH * 0.12 : -visH * 0.02;
-      const pts = samplePoints(shape.current, tiles.length);
-      const byTile: THREE.Vector3[] = new Array(tiles.length);
-      shuffle.forEach((tileIndex, k) => {
+      const pts = samplePoints(shape.current, items.length);
+      const byItem: THREE.Vector3[] = new Array(items.length);
+      order.forEach((itemIndex, k) => {
         const [x, y] = pts[k];
-        byTile[tileIndex] = new THREE.Vector3(cx + x * scale, cy + y * scale, tiles[tileIndex].depth);
+        byItem[itemIndex] = new THREE.Vector3(x * scale, y * scale, items[itemIndex].depth);
       });
-      targets.current = byTile;
+      local.current = byItem;
     }
+
+    // At the top of the page the symbol sits on the right; scrolling eases it to the centre.
+    mix.current = THREE.MathUtils.damp(mix.current, scrollMix(), 4, dt);
+    const m = mix.current * mix.current * (3 - 2 * mix.current);
+    const { w: visW, h: visH } = view.current;
+    const cx = mobile ? 0 : visW * 0.24 * (1 - m);
+    const cy = mobile ? visH * 0.12 * (1 - m) : -visH * 0.02;
 
     let pointerOn = false;
     if (!mobile && Math.abs(pointer.current.x) <= 1) {
@@ -226,12 +250,14 @@ function Field({ count, mobile, still, shape }: { count: number; mobile: boolean
       pointerOn = !!ray.ray.intersectPlane(plane, hit);
     }
 
-    tiles.forEach((tile, i) => {
+    items.forEach((item, i) => {
       const g = groups.current[i];
-      const target = targets.current[i];
-      if (!g || !target) return;
+      const lp = local.current[i];
+      if (!g || !lp) return;
+      const tx = cx + lp.x;
+      const ty = cy + lp.y;
       const L = live[i];
-      // The cursor pushes tiles away; they drift back into the symbol.
+      // The cursor pushes artifacts away; they drift back into the symbol.
       if (pointerOn) {
         const dx = L.pos.x - hit.x;
         const dy = L.pos.y - hit.y;
@@ -244,41 +270,31 @@ function Field({ count, mobile, still, shape }: { count: number; mobile: boolean
         }
       }
       L.vel.multiplyScalar(Math.exp(-dt * 2.6));
-      // Each tile has its own pace, so symbols assemble in a ripple rather than all at once.
+      // Each artifact moves at its own pace, so a symbol assembles in a ripple.
       const k = 1 - Math.exp(-dt * (1.5 + (i % 7) * 0.18));
-      const bob = still ? 0 : Math.sin(t * 0.8 + tile.phase) * 0.08;
-      L.pos.x += (target.x - L.pos.x) * k + L.vel.x * dt;
-      L.pos.y += (target.y + bob - L.pos.y) * k + L.vel.y * dt;
-      L.pos.z += (target.z - L.pos.z) * k;
+      const bob = still ? 0 : Math.sin(t * 0.8 + item.phase) * 0.08;
+      L.pos.x += (tx - L.pos.x) * k + L.vel.x * dt;
+      L.pos.y += (ty + bob - L.pos.y) * k + L.vel.y * dt;
+      L.pos.z += (lp.z - L.pos.z) * k;
       g.position.copy(L.pos);
-      // Face the viewer with a little life; tiles in motion tumble a bit.
-      const travel = Math.min(1, L.pos.distanceTo(target) / 4);
+      const travel = Math.min(1, Math.hypot(tx - L.pos.x, ty - L.pos.y) / 4);
       if (!still) {
-        L.rot.x = Math.sin(t * 0.6 + tile.phase) * 0.18 + travel * 1.2 * tile.spin;
-        L.rot.y = Math.cos(t * 0.5 + tile.phase) * 0.22 + travel * 1.6 * tile.spin;
-        L.rot.z = travel * tile.spin;
+        L.rot.x = Math.sin(t * 0.6 + item.phase) * 0.22 + travel * 1.2 * item.spin;
+        L.rot.y = Math.cos(t * 0.5 + item.phase) * 0.3 + travel * 1.6 * item.spin;
+        L.rot.z = Math.sin(t * 0.4 + item.phase) * 0.15 + travel * item.spin;
       }
       g.rotation.copy(L.rot);
-      g.scale.setScalar(tile.size);
+      g.scale.setScalar(item.base * item.size);
     });
   });
 
   return (
     <>
-      {tiles.map((tile, i) => {
-        const [body, ink] = STYLES[tile.style];
-        return (
-          <group key={i} ref={(g) => { groups.current[i] = g; }}>
-            <RoundedBox args={[1, 1, 0.22]} radius={0.2} smoothness={4}>
-              <meshPhysicalMaterial color={body} roughness={0.32} clearcoat={0.8} clearcoatRoughness={0.25} />
-            </RoundedBox>
-            <mesh position={[0, 0, 0.115]}>
-              <planeGeometry args={[0.66, 0.66]} />
-              <meshBasicMaterial map={textures.get(`${tile.glyph}-${ink}`)} transparent toneMapped={false} />
-            </mesh>
-          </group>
-        );
-      })}
+      {items.map((it, i) => (
+        <group key={i} ref={(g) => { groups.current[i] = g; }}>
+          <Artifact item={it} tex={tex} />
+        </group>
+      ))}
     </>
   );
 }
@@ -288,6 +304,7 @@ export default function Artifacts3D() {
   const [mobile, setMobile] = useState(false);
   const [still, setStill] = useState(false);
   const shape = useRef("bulb");
+  const layer = useRef<HTMLDivElement>(null);
   const path = usePathname();
 
   useEffect(() => {
@@ -295,6 +312,20 @@ export default function Artifacts3D() {
     setStill(window.matchMedia("(prefers-reduced-motion: reduce)").matches);
     setReady(true);
   }, []);
+
+  // Sharp at the top of the page; it softens (blur, a little fade) as you scroll into the content.
+  useEffect(() => {
+    const onScroll = () => {
+      const m = scrollMix();
+      if (layer.current) {
+        layer.current.style.filter = m > 0.01 ? `blur(${(m * 2.2).toFixed(2)}px)` : "none";
+        layer.current.style.opacity = String(1 - m * 0.2);
+      }
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [ready, path]);
 
   // Watch which section is in the middle of the screen and take its symbol.
   useEffect(() => {
@@ -321,20 +352,20 @@ export default function Artifacts3D() {
 
   if (!ready) return null;
   return (
-    <div className="artifacts" aria-hidden>
+    <div ref={layer} className="artifacts" aria-hidden>
       <Canvas
         dpr={mobile ? [1, 1.5] : [1, 2]}
         camera={{ fov: 38, position: [0, 0, 22], near: 0.1, far: 80 }}
         gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
       >
         <ambientLight intensity={0.55} />
-        <directionalLight position={[6, 10, 8]} intensity={1.4} />
+        <directionalLight position={[6, 10, 8]} intensity={1.5} />
         <Environment resolution={128} frames={1}>
           <Lightformer intensity={2} position={[0, 6, 6]} scale={[14, 4, 1]} />
           <Lightformer intensity={1.2} color={TAN} position={[8, -2, 4]} rotation-y={-Math.PI / 2} scale={[10, 4, 1]} />
           <Lightformer intensity={0.8} color={PAPER} position={[-8, 0, 4]} rotation-y={Math.PI / 2} scale={[10, 4, 1]} />
         </Environment>
-        <Field count={mobile ? 26 : 44} mobile={mobile} still={still} shape={shape} />
+        <Field count={mobile ? 24 : 38} mobile={mobile} still={still} shape={shape} />
       </Canvas>
     </div>
   );
