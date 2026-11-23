@@ -4,11 +4,11 @@ import { useEffect, useState } from "react";
 import { site } from "@/data/site";
 
 const links = [
-  { href: "#work", label: "Work" },
-  { href: "#datasheet", label: "Datasheet" },
-  { href: "#experience", label: "Experience" },
-  { href: "#pm-log", label: "PM log" },
-  { href: "#reels", label: "Reels" },
+  { href: "#about", label: "About" },
+  { href: "#define", label: "Skills" },
+  { href: "#build", label: "Projects" },
+  { href: "#launch", label: "Experience" },
+  { href: "#measure", label: "Reels" },
   { href: "#contact", label: "Contact" },
 ];
 
