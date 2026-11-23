@@ -173,7 +173,8 @@ export function CircleSection({
   const reduce = useReducedMotion();
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "start 0.1"] });
   const r = useTransform(scrollYProgress, [0, 1], [6, 150]);
-  const clip = useTransform(r, (v) => `circle(${v}% at 50% 100%)`);
+  // Once fully open, drop the clip so cards inside can sit above the 3D layer.
+  const clip = useTransform(r, (v) => (v >= 149 ? "none" : `circle(${v}% at 50% 100%)`));
   return (
     <section ref={ref} id={id} className={`under under--${under}`}>
       <motion.div className={className} style={reduce ? undefined : { clipPath: clip }}>
