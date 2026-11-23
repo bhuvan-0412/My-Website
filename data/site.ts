@@ -6,7 +6,7 @@ export const site = {
   name: "Bhuvan Thota",
   initials: "BT",
   headline: "I build AI products and think about them like a product manager.",
-  openTo: ["Product management", "Python", "AI engineering", "Software development"],
+  openTo: ["Product management", "AI engineering", "Software development"],
   location: "Goa · Hyderabad, India",
   email: "thotabhuvan@gmail.com",
   resumeUrl: "/resume.pdf",
@@ -261,7 +261,7 @@ export const areas: { title: string; text: string; tags: string[] }[] = [
 export const faqs: { q: string; a: string }[] = [
   {
     q: "What roles are you looking for?",
-    a: "Internships in product management, Python, AI engineering and software development.",
+    a: "Internships in product management, AI engineering and software development.",
   },
   {
     q: "Are you more of a PM or an engineer?",
@@ -275,4 +275,75 @@ export const faqs: { q: string; a: string }[] = [
     q: "Where can I see your resume?",
     a: "It's a one-page PDF, linked in the menu and the footer.",
   },
+];
+
+/* ── Experience dropdowns (everything from the resume) ─── */
+export const roles: {
+  org: string;
+  title: string;
+  period: string;
+  place: string;
+  summary: string;
+  points: string[];
+  built?: { name: string; url: string }[];
+  tools: string[];
+}[] = [
+  {
+    org: "Swecha Telangana",
+    title: "AI Research & Open Source Intern · Team lead",
+    period: "May – Jul 2026",
+    place: "Hyderabad",
+    summary: "Led the team that built 5 AI prototypes in 2 months.",
+    points: [
+      "Planned the scope and assigned the work for a team that shipped 5 AI prototypes in 2 months.",
+      "ViralSpy: a 4-agent pipeline that spots topics trending on Reels, Shorts and Reddit before they peak, using velocity scoring, Z-score spike detection, per-niche re-ranking and LLM-generated briefs.",
+      "QuickSewa: a photo-based civic complaint app using Gemini Vision. AgroSense: a crop and fertiliser recommender using 3 ML models.",
+      "Tillu RAG assistant: answers questions about an uploaded PDF or text file using only that document (Sentence Transformers, FAISS, Groq).",
+      "EconChain AI: turns invoices, trade reports and policy notices into structured data with supply-chain risk flags, fully offline (PyMuPDF, Tesseract OCR, Qwen 2.5 3B on Ollama, SQLite, Docker).",
+      "Submitted an open-source merge request (under review).",
+    ],
+    built: [
+      { name: "ViralSpy", url: "https://viral-spy-eight.vercel.app" },
+      { name: "QuickSewa", url: "https://quick-sewa.vercel.app" },
+      { name: "AgroSense", url: "https://agrosense-soilmonitoring.vercel.app" },
+      { name: "Tillu RAG", url: "https://github.com/bhuvan-0412/Personal_Chatbot" },
+      { name: "EconChain AI", url: "https://github.com/bhuvan-0412/EconChain---offline-first-CPU-powered-AI" },
+    ],
+    tools: ["Next.js", "Supabase", "PostgreSQL", "LLM agents", "FAISS", "Ollama", "Docker"],
+  },
+  {
+    org: "Gnani.ai",
+    title: "AI Systems Testing Intern",
+    period: "Jul – Aug 2025",
+    place: "Remote",
+    summary: "Tested a production AI voice agent and reported 100+ improvements.",
+    points: [
+      "Evaluated AI voice-agent output across 600+ live conversations, labelling each one a success or a failure.",
+      "Grouped recurring intent-mapping and response failures by cause, and reported 100+ improvements to the team.",
+    ],
+    tools: ["Voice AI", "Conversation evaluation", "Failure analysis"],
+  },
+  {
+    org: "@its.bhuvan.builds",
+    title: "Content creator & video editor",
+    period: "2026 – now",
+    place: "Instagram",
+    summary: "Learning product management in public, and editing every reel myself.",
+    points: [
+      "Running a 60-day series on product management: one lesson per reel, now at day 22.",
+      "25+ posts on learning PM and building AI products, followed by 200+ people.",
+      "I edit every reel myself: the hook, the pacing, the cuts, the captions and the on-screen type.",
+    ],
+    built: [{ name: "Instagram", url: "https://www.instagram.com/its.bhuvan.builds/" }],
+    tools: ["Video editing", "Captions", "Storytelling"],
+  },
+];
+
+/** The content-creation journey, only from Instagram and the resume. */
+export const journey: { title: string; text: string }[] = [
+  { title: "Learn in public", text: "I started sharing what I learn about product management, instead of learning it quietly." },
+  { title: "60 days of PM", text: "One lesson per reel: PRDs, user research, prioritisation, competition, growth." },
+  { title: "Edit it myself", text: "Every reel is cut by me: a hook in the first seconds, tight pacing, captions and on-screen type." },
+  { title: "25+ posts, 200+ followers", text: "A small audience that grows with every lesson." },
+  { title: "Day 22 of 60", text: "Still going. The log updates as the series does." },
 ];

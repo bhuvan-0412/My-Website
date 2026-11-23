@@ -29,6 +29,18 @@ export default function Header() {
         <Link href="/" className="hdr__logo" aria-label="Bhuvan Thota, home">
           Bhuvan Thota<span>.</span>
         </Link>
+        {/* Desktop: every page is always visible, with the current one marked. */}
+        <nav className="hdr__nav" aria-label="Pages">
+          {PAGES.map((p) => {
+            const here = p.href === "/" ? path === "/" : path.startsWith(p.href);
+            return (
+              <Link key={p.href} href={p.href} className={`hdr__link ${here ? "is-here" : ""}`} aria-current={here ? "page" : undefined}>
+                {here && <motion.span layoutId="nav-dot" className="hdr__dot" transition={{ type: "spring", stiffness: 420, damping: 32 }} />}
+                <span>{p.label}</span>
+              </Link>
+            );
+          })}
+        </nav>
         <button className="hdr__menu" onClick={() => setOpen((o) => !o)} aria-expanded={open} aria-controls="site-menu">
           <span className="hdr__menu-label">{open ? "Close" : "Menu"}</span>
           <span className={`hdr__burger ${open ? "is-open" : ""}`} aria-hidden>

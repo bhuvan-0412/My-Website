@@ -1,8 +1,10 @@
 import Link from "next/link";
 import Image from "next/image";
-import { site, areas, experience, faqs, projects, projectMeta, stats, pmSeries } from "@/data/site";
+import { site, areas, faqs, projects, projectMeta, stats, pmSeries } from "@/data/site";
 import { Chroma, CircleSection, Counter, LineReveal, Rise, RoadmapZone, ScrollBadge, ScrollWords, Stagger, Ticker } from "@/components/bold/Motion";
 import Faq from "@/components/bold/Faq";
+import Roles from "@/components/bold/Roles";
+import Journey from "@/components/bold/Journey";
 import { Wipe } from "@/components/bold/Media";
 
 const Arrow = () => (
@@ -26,7 +28,7 @@ export default function Home() {
   return (
     <>
       {/* ── Hero ─────────────────────────────── */}
-      <section className="hero sec--ink">
+      <section className="hero sec--ink" data-shape="bulb">
         <div className="wrap">
           <Chroma>
             <LineReveal
@@ -47,7 +49,7 @@ export default function Home() {
             <Rise delay={0.9} y={20}>
               <p className="hero__lede">
                 {site.name}. Dual-degree student at BITS Pilani, Goa, building AI products end to end and learning
-                product management in public. Open to PM, Python, AI and software internships.
+                product management in public. Open to product, AI and software internships.
               </p>
             </Rise>
             <Rise delay={1.05} y={20} className="hero__btns">
@@ -68,7 +70,7 @@ export default function Home() {
       </div>
 
       {/* ── Statement on paper, opened by a circle ─ */}
-      <CircleSection id="statement" className="sec sec--paper statement">
+      <CircleSection id="statement" className="sec sec--paper statement" shape="question">
         <div className="wrap">
           <Chroma>
             <ScrollWords
@@ -81,7 +83,7 @@ export default function Home() {
       </CircleSection>
 
       {/* ── How I work: the artifacts line up into a roadmap ─ */}
-      <RoadmapZone className="sec sec--paper roadmap">
+      <RoadmapZone className="sec sec--ink roadmap" shape="roadmap">
         <div className="wrap">
           <div className="sec__head">
             <LineReveal as="h2" className="display sec__title" lines={["Idea to", <span key="s" className="t-tangerine">shipped.</span>]} onView />
@@ -102,7 +104,7 @@ export default function Home() {
       </RoadmapZone>
 
       {/* ── Numbers ──────────────────────────── */}
-      <section className="sec sec--mint numbers">
+      <section className="sec sec--paper numbers" data-shape="arrow">
         <div className="wrap">
           <div className="sec__head">
             <LineReveal as="h2" className="display sec__title" lines={["One builder,", "many hats."]} onView />
@@ -144,13 +146,13 @@ export default function Home() {
       </section>
 
       {/* ── What I build ─────────────────────── */}
-      <section className="sec sec--paper">
+      <section className="sec sec--ink" data-shape="brackets">
         <div className="wrap">
           <div className="sec__head">
             <LineReveal as="h2" className="display sec__title" lines={[<span key="b">What I <span className="t-tangerine">build.</span></span>]} onView />
             <Rise className="sec__aside">
               <p>Four kinds of work, one habit: check that it worked before calling it done.</p>
-              <Link className="pill pill--ink" href="/work">
+              <Link className="pill pill--tangerine" href="/work">
                 All work <Arrow />
               </Link>
             </Rise>
@@ -178,7 +180,7 @@ export default function Home() {
       </section>
 
       {/* ── Live work, opened by a tangerine circle ─ */}
-      <CircleSection className="sec sec--tangerine live" under="paper">
+      <CircleSection className="sec sec--tangerine live" shape="check">
         <div className="wrap">
           <div className="sec__head">
             <LineReveal as="h2" className="display sec__title" lines={[<span key="m">Live, not <span className="t-ink">mockups.</span></span>]} onView />
@@ -210,35 +212,39 @@ export default function Home() {
         </div>
       </CircleSection>
 
-      {/* ── Where I've worked ────────────────── */}
-      <section className="sec sec--ink">
+      {/* ── Experience: internships + the channel, as dropdowns ─ */}
+      <section className="sec sec--ink experience" data-shape="flag">
         <div className="wrap">
           <div className="sec__head">
-            <LineReveal as="h2" className="display sec__title" lines={[<span key="w">Where I&apos;ve <span className="t-tangerine">shipped.</span></span>]} onView />
+            <LineReveal as="h2" className="display sec__title" lines={[<span key="w">Where I&apos;ve <span className="t-tangerine">worked.</span></span>]} onView />
             <Rise className="sec__aside">
-              <p>Two internships so far, one of them leading the team.</p>
+              <p>Two internships, one of them leading the team, and the channel I run. Open any of them for the full story.</p>
             </Rise>
           </div>
-          <Stagger className="jobs">
-            {experience.map((e) => (
-              <article key={e.org} className="job">
-                <div>
-                  <h3 className="display">{e.org}</h3>
-                  <p className="job__role">{e.title}</p>
-                  <p className="job__text">{e.points[0]}</p>
-                </div>
-                <p className="job__when">
-                  <span>{e.period}</span>
-                  <span>{e.place}</span>
-                </p>
-              </article>
-            ))}
-          </Stagger>
+          <Rise>
+            <Roles />
+          </Rise>
+        </div>
+      </section>
+
+      {/* ── Content creation journey ─────────── */}
+      <section className="sec sec--paper journey-sec" data-shape="play">
+        <div className="wrap">
+          <div className="sec__head">
+            <LineReveal as="h2" className="display sec__title" lines={[<span key="j">Learning in <span className="t-tangerine">public.</span></span>]} onView />
+            <Rise className="sec__aside">
+              <p>Alongside building, I teach myself product management on Instagram and edit every reel myself.</p>
+              <Link className="pill pill--ink" href="/content">
+                See the content <Arrow />
+              </Link>
+            </Rise>
+          </div>
+          <Journey />
         </div>
       </section>
 
       {/* ── FAQ ──────────────────────────────── */}
-      <section className="sec sec--paper">
+      <section className="sec sec--ink faq-sec" data-shape="bubble">
         <div className="wrap faq-wrap">
           <LineReveal as="h2" className="display sec__title" lines={["Questions,", <span key="a" className="t-tangerine">answered.</span>]} onView />
           <Faq items={faqs} />

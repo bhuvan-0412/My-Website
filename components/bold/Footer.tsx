@@ -9,7 +9,7 @@ export default function Footer() {
       <div className="wrap foot__cta">
         <LineReveal as="h2" className="foot__title display" lines={["Let's build", <span key="g" className="t-tangerine">it.</span>]} onView />
         <div className="foot__side">
-          <p>Product, Python, AI or software internships. Email is the fastest way to reach me.</p>
+          <p>Product, AI or software internships. Email is the fastest way to reach me.</p>
           <a className="foot__mail" href={`mailto:${site.email}`}>
             {site.email}
           </a>

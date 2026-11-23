@@ -7,7 +7,7 @@ export const metadata: Metadata = { title: "About" };
 export default function AboutPage() {
   return (
     <>
-      <section className="page-hero sec--ink">
+      <section className="page-hero sec--ink" data-shape="bulb">
         <div className="wrap">
           <LineReveal className="display page-hero__title" delay={0.3} lines={["Builder", <span key="p" className="t-tangerine">with a PM brain.</span>]} />
           <Rise delay={0.7} y={20}>
@@ -16,7 +16,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <CircleSection className="sec sec--paper statement">
+      <CircleSection className="sec sec--paper statement" shape="question">
         <div className="wrap">
           <ScrollWords
             className="display statement__text"
@@ -26,7 +26,7 @@ export default function AboutPage() {
         </div>
       </CircleSection>
 
-      <section className="sec sec--paper">
+      <section className="sec sec--paper" data-shape="user">
         <div className="wrap">
           <div className="about-grid">
             <Rise className="about-copy">
@@ -51,7 +51,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <section className="sec sec--ink">
+      <section className="sec sec--ink" data-shape="flag">
         <div className="wrap">
           <div className="sec__head">
             <LineReveal as="h2" className="display sec__title" lines={["Timeline"]} onView />
@@ -88,7 +88,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <section className="sec sec--paper">
+      <section className="sec sec--paper" data-shape="brackets">
         <div className="wrap">
           <div className="sec__head">
             <LineReveal as="h2" className="display sec__title" lines={["Toolkit"]} onView />

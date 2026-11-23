@@ -161,15 +161,17 @@ export function CircleSection({
   children,
   className,
   id,
+  shape,
 }: {
   children: ReactNode;
   className?: string;
   id?: string;
-  /** Kept for compatibility; the colour change now happens on the fixed backdrop. */
+  /** Which symbol the background icons form while this section is on screen. */
+  shape?: string;
   under?: "ink" | "paper" | "tangerine" | "mint";
 }) {
   return (
-    <section id={id} className={className}>
+    <section id={id} className={className} data-shape={shape}>
       {children}
     </section>
   );
@@ -255,7 +257,7 @@ export function Stagger({ children, className, gap = 0.08 }: { children: ReactNo
 }
 
 /** While this block is on screen, the floating artifacts line up into a roadmap. */
-export function RoadmapZone({ children, className }: { children: ReactNode; className?: string }) {
+export function RoadmapZone({ children, className, shape }: { children: ReactNode; className?: string; shape?: string }) {
   const ref = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
   useMotionValueEvent(scrollYProgress, "change", (p) => {
@@ -264,8 +266,8 @@ export function RoadmapZone({ children, className }: { children: ReactNode; clas
   });
   useEffect(() => () => void (scene.formation = 0), []);
   return (
-    <div ref={ref} className={className}>
+    <section ref={ref} className={className} data-shape={shape}>
       {children}
-    </div>
+    </section>
   );
 }

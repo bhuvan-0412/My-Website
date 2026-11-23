@@ -5,9 +5,9 @@ import SmoothScroll from "@/components/SmoothScroll";
 import Header from "@/components/bold/Header";
 import Footer from "@/components/bold/Footer";
 import ArtifactsLayer from "@/components/bold/ArtifactsLayer";
-import Backdrop from "@/components/bold/Backdrop";
 import Cursor from "@/components/bold/Cursor";
 import PageExit from "@/components/bold/PageExit";
+import NextPage from "@/components/bold/NextPage";
 import Preloader from "@/components/bold/Preloader";
 import "./globals.css";
 
@@ -17,7 +17,7 @@ const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" });
 
 export const metadata: Metadata = {
   title: { default: `${site.name} · I build AI products, and I think like a PM`, template: `%s · ${site.name}` },
-  description: `${site.headline} Open to internships in product management, Python, AI engineering and software development.`,
+  description: `${site.headline} Open to internships in product management, AI engineering and software development.`,
 };
 
 export const viewport: Viewport = {
@@ -30,9 +30,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <SmoothScroll />
         <Header />
-        <Backdrop />
         <ArtifactsLayer />
-        <main id="top">{children}</main>
+        <main id="top">
+          {children}
+          <NextPage />
+        </main>
         <Footer />
         <Cursor />
         <PageExit />
