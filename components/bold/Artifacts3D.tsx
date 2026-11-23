@@ -167,7 +167,10 @@ function Field({ count, mobile, still }: { count: number; mobile: boolean; still
       const kind = kinds[i % kinds.length];
       const pal = colors[kind];
       // Spread across a tall column so artifacts keep appearing as the page scrolls.
-      const base = new THREE.Vector3((r() - 0.5) * 22, (r() - 0.5) * 30, -7 + r() * 7);
+      // Bias towards the left and right edges so headlines in the middle stay readable.
+      const side = i % 2 === 0 ? -1 : 1;
+      const x = side * (mobile ? 2.6 + r() * 3.4 : 6.5 + r() * 6.5);
+      const base = new THREE.Vector3(x, (r() - 0.5) * 30, -8 + r() * 6);
       // Roadmap slot: a rising diagonal across the screen.
       const t = i / Math.max(1, count - 1);
       const slot = new THREE.Vector3(-11 + t * 22, -4.5 + t * 9 + Math.sin(t * 9) * 0.6, -2 + Math.cos(t * 7) * 1.2);
@@ -303,7 +306,7 @@ export default function Artifacts3D() {
           <Lightformer intensity={1} color={MINT} position={[-8, 0, 4]} rotation-y={Math.PI / 2} scale={[10, 4, 1]} />
           <Lightformer intensity={1} color={TANGERINE} position={[8, -2, 4]} rotation-y={-Math.PI / 2} scale={[10, 4, 1]} />
         </Environment>
-        <Field count={mobile ? 16 : 30} mobile={mobile} still={still} />
+        <Field count={mobile ? 12 : 26} mobile={mobile} still={still} />
       </Canvas>
     </div>
   );

@@ -32,9 +32,9 @@ export default function Home() {
               className="display hero__title"
               delay={0.35}
               lines={[
-                <>
+                <span key="a">
                   I build <span className="t-mint">the AI.</span>
-                </>,
+                </span>,
                 "Then I ask if",
                 <span key="x" className="t-tangerine">
                   it should exist.
