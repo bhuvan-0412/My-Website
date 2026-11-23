@@ -793,12 +793,12 @@ function Rig({ carRef, active, still, mobile }: { carRef: MutableRefObject<THREE
       const subject = car.position.clone().lerp(s0.building, 0.45).add(new THREE.Vector3(0, 2, 0));
       const introCam = car.position
         .clone()
-        .addScaledVector(forward, mobile ? -16 : -13)
-        .addScaledVector(left, mobile ? -4 : -10)
-        .add(new THREE.Vector3(0, mobile ? 13 : 9, 0));
+        .addScaledVector(forward, mobile ? -20 : -13)
+        .addScaledVector(left, mobile ? -7 : -10)
+        .add(new THREE.Vector3(0, mobile ? 17 : 9, 0));
       const view = subject.clone().sub(introCam).normalize();
       const camRight = new THREE.Vector3().crossVectors(view, UP).normalize();
-      const introAt = mobile ? subject.clone().add(new THREE.Vector3(0, 3, 0)) : subject.clone().addScaledVector(camRight, -7);
+      const introAt = mobile ? subject.clone().add(new THREE.Vector3(0, 6.5, 0)) : subject.clone().addScaledVector(camRight, -7);
       tmp.cam.lerp(introCam, wi);
       tmp.at.lerp(introAt, wi);
     }
@@ -907,10 +907,12 @@ export default function World({
   progress,
   active,
   onPick,
+  onReady,
 }: {
   progress: MutableRefObject<number>;
   active: number;
   onPick: (i: number) => void;
+  onReady?: () => void;
 }) {
   const [ready, setReady] = useState(false);
   const [still, setStill] = useState(false);
@@ -938,6 +940,7 @@ export default function World({
       camera={{ fov: mobile ? 55 : 42, near: 0.5, far: 520, position: [20, 75, 25] }}
       gl={{ antialias: !fx, powerPreference: "high-performance" }}
       style={{ touchAction: "pan-y" }}
+      onCreated={() => requestAnimationFrame(() => requestAnimationFrame(() => onReady?.()))}
     >
       <PerformanceMonitor
         onDecline={() => {

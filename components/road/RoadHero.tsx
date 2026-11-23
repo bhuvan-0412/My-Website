@@ -25,6 +25,12 @@ export default function RoadHero() {
   const progress = useRef(0);
   const [active, setActive] = useState(-1);
   const [pct, setPct] = useState(0);
+  const [loaded, setLoaded] = useState(false);
+  // Never leave the loading note up forever (e.g. no WebGL): the panels still work without the world.
+  useEffect(() => {
+    const t = window.setTimeout(() => setLoaded(true), 12000);
+    return () => window.clearTimeout(t);
+  }, []);
   const reduce = useReducedMotion();
 
   useEffect(() => {
@@ -74,11 +80,15 @@ export default function RoadHero() {
   return (
     <section ref={section} className="drive" aria-label="Intro: a drive through how I work">
       <div className="drive__sticky">
-        <div className="drive__world">
+        <div className={`drive__world ${loaded ? "is-ready" : ""}`}>
           <SceneBoundary>
-            <World progress={progress} active={active} onPick={goTo} />
+            <World progress={progress} active={active} onPick={goTo} onReady={() => setLoaded(true)} />
           </SceneBoundary>
         </div>
+        <p className={`loading ${loaded ? "is-done" : ""}`} aria-hidden>
+          <span className="loading__dot" />
+          Building the world
+        </p>
 
         <motion.div
           className="veil"

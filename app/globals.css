@@ -129,7 +129,18 @@ a:hover .arrow { transform: translate(2px, -2px); }
 /* ── The drive (sticky 3D world) ────────────────────────── */
 .drive { position: relative; height: 620vh; background: var(--sky); }
 .drive__sticky { position: sticky; top: 0; height: 100vh; height: 100svh; overflow: hidden; }
-.drive__world { position: absolute; inset: 0; }
+.drive__world { position: absolute; inset: 0; opacity: 0; transform: scale(1.04); transition: opacity 1.2s var(--ease-out), transform 2.4s var(--ease-out); }
+.drive__world.is-ready { opacity: 1; transform: none; }
+.loading {
+  position: absolute; z-index: 2; right: var(--gutter); top: 84px;
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 7px 14px; border-radius: 999px; background: rgba(255, 255, 255, 0.75);
+  font-size: 0.85rem; font-weight: 600; color: var(--ink-2);
+  transition: opacity 0.5s;
+}
+.loading.is-done { opacity: 0; pointer-events: none; }
+.loading__dot { width: 9px; height: 9px; border-radius: 50%; background: var(--build); animation: blink 1s ease-in-out infinite alternate; }
+@keyframes blink { from { opacity: 0.25; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
 .drive__world canvas { display: block; }
 
 .intro { position: absolute; left: 0; right: 0; top: clamp(92px, 16vh, 170px); z-index: 2; }
