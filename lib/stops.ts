@@ -113,11 +113,27 @@ export function roadPosition(p: number) {
   return KEYS[KEYS.length - 1][1];
 }
 
-/** The stop whose pause window contains (or is nearest to) the scroll progress; -1 before the first. */
+/** The stop the car is parked at (its pause window contains the scroll progress), or -1 while driving. */
 export function activeStop(p: number) {
   const span = 1 / STOPS.length;
-  if (p < span * 0.3) return -1;
-  return Math.min(STOPS.length - 1, Math.floor((p - span * 0.3) / span + 0.0001));
+  for (let i = 0; i < STOPS.length; i++) {
+    const a = i * span;
+    const end = i === STOPS.length - 1 ? 1.01 : a + span * 0.97;
+    if (p >= a + span * 0.33 && p <= end) return i;
+  }
+  return -1;
+}
+
+/** Next and previous stops relative to the current scroll progress, for the HUD buttons. */
+export function neighbours(p: number) {
+  let next = STOPS.length;
+  let prev = -1;
+  STOPS.forEach((_, i) => {
+    const s = stopProgress(i);
+    if (s > p + 0.01 && next === STOPS.length) next = i;
+    if (s < p - 0.01) prev = i;
+  });
+  return { next, prev };
 }
 
 /** Scroll progress at the middle of a stop's pause. */

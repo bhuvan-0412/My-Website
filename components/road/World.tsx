@@ -565,6 +565,7 @@ function StopSite({ i, active, still, onPick }: { i: number; active: boolean; st
   const ring = useRef<THREE.MeshBasicMaterial>(null);
   const kick = useRef(0);
   const was = useRef(active);
+  const [hover, setHover] = useState(false);
   const sign = useMemo(() => signTexture(stop.name, stop.color), [stop]);
   const B = BUILDINGS[i];
 
@@ -578,16 +579,23 @@ function StopSite({ i, active, still, onPick }: { i: number; active: boolean; st
     kick.current = Math.max(0, kick.current - dt * 1.4);
     if (group.current) {
       const bounce = still ? 0 : Math.sin(kick.current * Math.PI * 3) * kick.current * 0.12;
-      group.current.scale.setScalar(1 + bounce);
+      const lift = THREE.MathUtils.damp(group.current.userData.lift ?? 0, hover ? 1 : 0, 8, dt);
+      group.current.userData.lift = lift;
+      group.current.scale.setScalar(1 + bounce + lift * 0.04);
+      group.current.position.y = lift * 0.25;
     }
-    if (ring.current) ring.current.opacity = THREE.MathUtils.damp(ring.current.opacity, active ? 0.9 : 0.35, 6, dt);
+    if (ring.current) ring.current.opacity = THREE.MathUtils.damp(ring.current.opacity, active || hover ? 0.95 : 0.35, 6, dt);
   });
 
   const over = (e: ThreeEvent<PointerEvent>) => {
     e.stopPropagation();
+    setHover(true);
     document.body.style.cursor = "pointer";
   };
-  const out = () => (document.body.style.cursor = "");
+  const out = () => {
+    setHover(false);
+    document.body.style.cursor = "";
+  };
 
   return (
     <>
@@ -633,11 +641,182 @@ function StopSite({ i, active, still, onPick }: { i: number; active: boolean; st
   );
 }
 
+/* ── Small details that make the world feel lived in ────── */
+function nearAnyStop(u: number, pad = 0.045) {
+  return STOPS.some((s) => Math.abs(s.u - u) < pad);
+}
+
+/** Street lamps along the left verge, glowing softly (the bloom picks them up on desktop). */
+function Lamps() {
+  const spots = useMemo(() => {
+    const out: { p: THREE.Vector3; yaw: number }[] = [];
+    const n = Math.floor(LEN / 13);
+    for (let i = 1; i < n; i++) {
+      const u = i / n;
+      if (nearAnyStop(u) || u > 0.975) continue;
+      const p = CURVE.getPointAt(u);
+      const t = CURVE.getTangentAt(u);
+      const l = leftOf(t);
+      out.push({ p: p.clone().addScaledVector(l, 3.3), yaw: Math.atan2(-l.x, -l.z) });
+    }
+    return out;
+  }, []);
+  const posts = useRef<THREE.InstancedMesh>(null);
+  const arms = useRef<THREE.InstancedMesh>(null);
+  const bulbs = useRef<THREE.InstancedMesh>(null);
+  useLayoutEffect(() => {
+    const m = new THREE.Matrix4();
+    const q = new THREE.Quaternion();
+    const one = new THREE.Vector3(1, 1, 1);
+    spots.forEach(({ p, yaw }, i) => {
+      q.setFromAxisAngle(UP, yaw);
+      m.compose(new THREE.Vector3(p.x, 1.6, p.z), q, one);
+      posts.current?.setMatrixAt(i, m);
+      const fwd = new THREE.Vector3(Math.sin(yaw), 0, Math.cos(yaw)).multiplyScalar(0.55);
+      m.compose(new THREE.Vector3(p.x + fwd.x, 3.15, p.z + fwd.z), q, one);
+      arms.current?.setMatrixAt(i, m);
+      m.compose(new THREE.Vector3(p.x + fwd.x * 2, 2.98, p.z + fwd.z * 2), q, one);
+      bulbs.current?.setMatrixAt(i, m);
+    });
+    [posts.current, arms.current, bulbs.current].forEach((x) => x && (x.instanceMatrix.needsUpdate = true));
+  }, [spots]);
+  return (
+    <>
+      <instancedMesh ref={posts} args={[undefined, undefined, spots.length]} castShadow>
+        <cylinderGeometry args={[0.07, 0.1, 3.2, 8]} />
+        <meshStandardMaterial color="#2c3440" roughness={0.5} metalness={0.4} />
+      </instancedMesh>
+      <instancedMesh ref={arms} args={[undefined, undefined, spots.length]}>
+        <boxGeometry args={[0.08, 0.08, 1.1]} />
+        <meshStandardMaterial color="#2c3440" roughness={0.5} metalness={0.4} />
+      </instancedMesh>
+      <instancedMesh ref={bulbs} args={[undefined, undefined, spots.length]}>
+        <sphereGeometry args={[0.2, 12, 10]} />
+        <meshStandardMaterial color="#fff3c4" emissive="#ffd779" emissiveIntensity={2.2} toneMapped={false} />
+      </instancedMesh>
+    </>
+  );
+}
+
+/** Flowers and pebbles scattered along the verges. */
+function Verge({ count }: { count: number }) {
+  const { flowers, rocks } = useMemo(() => {
+    const r = rng(99);
+    const flowers: { x: number; z: number; s: number; c: number }[] = [];
+    const rocks: { x: number; z: number; s: number; rot: number }[] = [];
+    for (let i = 0; i < count; i++) {
+      const u = r();
+      const p = CURVE.getPointAt(u);
+      const l = leftOf(CURVE.getTangentAt(u));
+      const side = r() < 0.5 ? 1 : -1;
+      const off = side * (3.4 + r() * 5);
+      const pos = p.clone().addScaledVector(l, off);
+      if (SITES.some((s) => s.building.distanceToSquared(pos) < 36)) continue;
+      if (r() < 0.82) flowers.push({ x: pos.x, z: pos.z, s: 0.6 + r() * 0.7, c: r() });
+      else rocks.push({ x: pos.x, z: pos.z, s: 0.25 + r() * 0.45, rot: r() * 6 });
+    }
+    return { flowers, rocks };
+  }, [count]);
+  const f = useRef<THREE.InstancedMesh>(null);
+  const k = useRef<THREE.InstancedMesh>(null);
+  useLayoutEffect(() => {
+    const m = new THREE.Matrix4();
+    const q = new THREE.Quaternion();
+    const col = new THREE.Color();
+    const petals = ["#ff8fab", "#ffd166", "#ffffff", "#c7a6ff", "#ff9f68"];
+    flowers.forEach((t, i) => {
+      m.compose(new THREE.Vector3(t.x, 0.14 * t.s, t.z), q, new THREE.Vector3(t.s, t.s, t.s));
+      f.current?.setMatrixAt(i, m);
+      f.current?.setColorAt(i, col.set(petals[Math.floor(t.c * petals.length)]));
+    });
+    rocks.forEach((t, i) => {
+      q.setFromEuler(new THREE.Euler(t.rot, t.rot * 2, 0));
+      m.compose(new THREE.Vector3(t.x, t.s * 0.4, t.z), q, new THREE.Vector3(t.s * 1.3, t.s, t.s));
+      k.current?.setMatrixAt(i, m);
+    });
+    [f.current, k.current].forEach((x) => {
+      if (!x) return;
+      x.instanceMatrix.needsUpdate = true;
+      if (x.instanceColor) x.instanceColor.needsUpdate = true;
+    });
+  }, [flowers, rocks]);
+  return (
+    <>
+      <instancedMesh ref={f} args={[undefined, undefined, flowers.length]}>
+        <icosahedronGeometry args={[0.16, 0]} />
+        <meshStandardMaterial flatShading roughness={0.7} />
+      </instancedMesh>
+      <instancedMesh ref={k} args={[undefined, undefined, rocks.length]} castShadow receiveShadow>
+        <dodecahedronGeometry args={[1, 0]} />
+        <meshStandardMaterial color="#b8b4a8" flatShading roughness={0.9} />
+      </instancedMesh>
+    </>
+  );
+}
+
+/** The end of the road: a finish arch pointing at the contact section. */
+function FinishArch() {
+  const u = 0.993;
+  const p = CURVE.getPointAt(u);
+  const t = CURVE.getTangentAt(u);
+  const yaw = Math.atan2(-t.x, -t.z);
+  const banner = useMemo(() => {
+    const cv = document.createElement("canvas");
+    cv.width = 1024;
+    cv.height = 200;
+    const g = cv.getContext("2d")!;
+    g.fillStyle = "#14202e";
+    g.fillRect(0, 0, 1024, 200);
+    for (let i = 0; i < 32; i++) {
+      g.fillStyle = i % 2 ? "#ffffff" : "#14202e";
+      g.fillRect(i * 32, 0, 32, 16);
+      g.fillStyle = i % 2 ? "#14202e" : "#ffffff";
+      g.fillRect(i * 32, 184, 32, 16);
+    }
+    g.fillStyle = "#ffc23d";
+    g.font = `800 92px ${fonts().display}`;
+    g.textAlign = "center";
+    g.textBaseline = "middle";
+    g.fillText("Next stop: your team", 512, 104);
+    const tex = new THREE.CanvasTexture(cv);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    tex.anisotropy = 8;
+    return tex;
+  }, []);
+  return (
+    <group position={[p.x, 0, p.z]} rotation={[0, yaw, 0]}>
+      {[-3.1, 3.1].map((x) => (
+        <mesh key={x} position={[x, 2.6, 0]} castShadow>
+          <cylinderGeometry args={[0.22, 0.26, 5.2, 10]} />
+          <meshStandardMaterial color="#ff6a45" roughness={0.4} />
+        </mesh>
+      ))}
+      <mesh position={[0, 5.1, 0]} castShadow>
+        <boxGeometry args={[7, 1.35, 0.2]} />
+        <meshStandardMaterial attach="material-0" color="#14202e" />
+        <meshStandardMaterial attach="material-1" color="#14202e" />
+        <meshStandardMaterial attach="material-2" color="#14202e" />
+        <meshStandardMaterial attach="material-3" color="#14202e" />
+        <meshStandardMaterial attach="material-4" map={banner} emissive="#ffffff" emissiveMap={banner} emissiveIntensity={0.25} />
+        <meshStandardMaterial attach="material-5" map={banner} />
+      </mesh>
+      {/* Chequered line on the road */}
+      {Array.from({ length: 16 }).map((_, i) => (
+        <mesh key={i} position={[-1.875 + (i % 8) * 0.5 + 0.25, 0.05, i < 8 ? 0.25 : -0.25]} receiveShadow>
+          <boxGeometry args={[0.5, 0.02, 0.5]} />
+          <meshStandardMaterial color={(i + Math.floor(i / 8)) % 2 ? "#14202e" : "#ffffff"} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
 /* ── The car, the camera and the sun ────────────────────── */
 function Car({ progress, carRef, still }: { progress: MutableRefObject<number>; carRef: MutableRefObject<THREE.Group | null>; still: boolean }) {
   const wheels = useRef<(THREE.Group | null)[]>([]);
   const body = useRef<THREE.Group>(null);
   const u = useRef(roadPosition(progress.current));
+  const hop = useRef(0);
   const tmpT = useMemo(() => new THREE.Vector3(), []);
 
   useFrame((s, dt) => {
@@ -665,6 +844,13 @@ function Car({ progress, carRef, still }: { progress: MutableRefObject<number>; 
       body.current.position.y = 0.62 + (still ? 0 : Math.sin(s.clock.elapsedTime * 16) * Math.min(speed, 12) * 0.003);
       body.current.rotation.x = THREE.MathUtils.damp(body.current.rotation.x, -Math.min(speed, 14) * 0.005, 5, dt);
       body.current.rotation.z = THREE.MathUtils.damp(body.current.rotation.z, still ? 0 : -d * 0.35, 5, dt);
+      // Click the car: it hops and does a little spin.
+      if (hop.current > 0) {
+        hop.current = Math.max(0, hop.current - dt * 1.25);
+        const k = 1 - hop.current;
+        body.current.position.y += Math.sin(Math.PI * k) * 1.6;
+        body.current.rotation.y = (1 - Math.pow(1 - k, 3)) * Math.PI * 2;
+      } else body.current.rotation.y = 0;
     }
   });
 
@@ -677,7 +863,18 @@ function Car({ progress, carRef, still }: { progress: MutableRefObject<number>; 
 
   const wheelPos: [number, number, number][] = [[-0.86, 0.42, 0.9], [0.86, 0.42, 0.9], [-0.86, 0.42, -0.9], [0.86, 0.42, -0.9]];
   return (
-    <group ref={carRef}>
+    <group
+      ref={carRef}
+      onClick={(e) => {
+        e.stopPropagation();
+        if (!still && hop.current === 0) hop.current = 1;
+      }}
+      onPointerOver={(e) => {
+        e.stopPropagation();
+        document.body.style.cursor = "pointer";
+      }}
+      onPointerOut={() => (document.body.style.cursor = "")}
+    >
       <group ref={body} position={[0, 0.62, 0]}>
         <RoundedBox args={[1.72, 0.62, 3.05]} radius={0.2} smoothness={4} material={paint} castShadow receiveShadow />
         <RoundedBox args={[1.48, 0.6, 1.65]} radius={0.22} smoothness={4} position={[0, 0.56, -0.22]} material={white} castShadow />
@@ -775,12 +972,12 @@ function Rig({ carRef, active, still, mobile }: { carRef: MutableRefObject<THREE
       const right = leftOf(s.tangent).negate();
       const frameCam = s.road
         .clone()
-        .addScaledVector(right, mobile ? 17 : 14)
-        .addScaledVector(s.tangent, mobile ? -9 : -8)
-        .add(new THREE.Vector3(0, mobile ? 12 : 10, 0));
+        .addScaledVector(right, mobile ? 19 : 14)
+        .addScaledVector(s.tangent, mobile ? -11 : -8)
+        .add(new THREE.Vector3(0, mobile ? 17 : 10, 0));
       // Desktop keeps the building left of centre (the panel sits on the right);
       // phones keep it in the top half (the panel sits at the bottom).
-      const frameAt = s.road.clone().lerp(s.building, mobile ? 0.6 : 0.3).add(new THREE.Vector3(0, mobile ? 0.5 : 3.6, 0));
+      const frameAt = s.road.clone().lerp(s.building, mobile ? 0.45 : 0.3).add(new THREE.Vector3(0, mobile ? -8 : 3.6, 0));
       if (!mobile) frameAt.addScaledVector(right, 3.5).addScaledVector(s.tangent, 2);
       tmp.cam.lerp(frameCam, w);
       tmp.at.lerp(frameAt, w);
@@ -897,6 +1094,9 @@ function Scene({
       {STOPS.map((s, i) => (
         <StopSite key={s.id} i={i} active={active === i} still={still} onPick={onPick} />
       ))}
+      <Lamps />
+      <Verge count={mobile ? 260 : 520} />
+      <FinishArch />
       <Car progress={progress} carRef={carRef} still={still} />
       {fx && <Effects />}
     </>

@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import { Component, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { site } from "@/data/site";
-import { STOPS, activeStop, stopProgress } from "@/lib/stops";
+import { STOPS, activeStop, neighbours, stopProgress } from "@/lib/stops";
 
 const World = dynamic(() => import("./World"), { ssr: false });
 
@@ -75,6 +75,7 @@ export default function RoadHero() {
   );
 
   const stop = active >= 0 ? STOPS[active] : null;
+  const { next, prev } = neighbours(pct);
   const atStart = pct < 0.035;
 
   return (
@@ -144,6 +145,18 @@ export default function RoadHero() {
               Resume (PDF)
             </a>
           </motion.div>
+          <motion.p
+            className="intro__hint"
+            initial={reduce ? false : { opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 1, ease, delay: 2.4 }}
+          >
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <rect x="7" y="3" width="10" height="18" rx="5" />
+              <path d="M12 7v3" />
+            </svg>
+            Scroll or use the arrow keys to drive. Click a building to jump to it, or click the car.
+          </motion.p>
         </motion.div>
 
         {/* The panel for the stop the car is parked at */}
@@ -186,9 +199,9 @@ export default function RoadHero() {
         <nav className="hud" aria-label="Stops on the drive">
           <button
             className="hud__step"
-            onClick={() => goTo(Math.max(-1, active - 1))}
+            onClick={() => goTo(prev)}
             aria-label="Previous stop"
-            disabled={active < 0}
+            disabled={pct < 0.02}
           >
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
               <path d="M15 6l-6 6 6 6" />
@@ -199,7 +212,7 @@ export default function RoadHero() {
             {STOPS.map((s, i) => (
               <button
                 key={s.id}
-                className={`hud__stop ${active === i ? "is-on" : ""} ${active > i ? "is-done" : ""}`}
+                className={`hud__stop ${active === i ? "is-on" : ""} ${active !== i && pct > stopProgress(i) - 0.08 ? "is-done" : ""}`}
                 style={{ left: `${stopProgress(i) * 100}%`, ["--stop" as string]: s.color }}
                 onClick={() => goTo(i)}
                 aria-current={active === i ? "step" : undefined}
@@ -211,8 +224,14 @@ export default function RoadHero() {
           </div>
           <button
             className="hud__step"
-            onClick={() => (active >= STOPS.length - 1 ? document.getElementById("about")?.scrollIntoView({ behavior: "smooth" }) : goTo(active + 1))}
-            aria-label={active >= STOPS.length - 1 ? "Continue to the full story" : "Next stop"}
+            onClick={() => {
+              if (next < STOPS.length) return goTo(next);
+              const el = document.getElementById("about");
+              if (!el) return;
+              if (window.__lenis) window.__lenis.scrollTo(el, { offset: -70, duration: 1.4 });
+              else el.scrollIntoView({ behavior: "smooth" });
+            }}
+            aria-label={next >= STOPS.length ? "Continue to the full story" : "Next stop"}
           >
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
               <path d="M9 6l6 6-6 6" />
@@ -221,8 +240,7 @@ export default function RoadHero() {
         </nav>
 
         <p className={`hint ${atStart ? "" : "is-hidden"}`} aria-hidden>
-          <span className="only-fine">Scroll or use the arrow keys to drive. Click a building to jump to it.</span>
-          <span className="only-coarse">Swipe up to drive</span>
+          Swipe up to drive
         </p>
 
         <a className="skip" href="#about">
