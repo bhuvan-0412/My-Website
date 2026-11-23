@@ -48,7 +48,7 @@ export default function PmLogPage() {
       <section className="sec sec--ink">
         <div className="wrap">
           <div className="sec__head">
-            <LineReveal as="h2" className="display sec__title" lines={["Cut by", <span key="m" className="t-mint">me.</span>]} onView />
+            <LineReveal as="h2" className="display sec__title" lines={[<span key="m">Cut by <span className="t-tangerine">me.</span></span>]} onView />
             <Rise className="sec__aside">
               <p>Pacing, captions, cuts and on-screen type. A few reels I&apos;m proud of.</p>
             </Rise>

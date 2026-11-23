@@ -8,7 +8,7 @@ export default function ContactPage() {
   return (
     <section className="page-hero page-hero--tall sec--ink">
       <div className="wrap">
-        <LineReveal className="display page-hero__title" delay={0.3} lines={["Say", <span key="h" className="t-mint">hello.</span>]} />
+        <LineReveal className="display page-hero__title" delay={0.3} lines={[<span key="h">Say <span className="t-tangerine">hello.</span></span>]} />
         <Rise delay={0.7} y={20}>
           <p className="page-hero__lede">
             I&apos;m looking for internships in product management, Python, AI engineering and software development.

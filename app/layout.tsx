@@ -5,7 +5,10 @@ import SmoothScroll from "@/components/SmoothScroll";
 import Header from "@/components/bold/Header";
 import Footer from "@/components/bold/Footer";
 import ArtifactsLayer from "@/components/bold/ArtifactsLayer";
+import Backdrop from "@/components/bold/Backdrop";
 import Cursor from "@/components/bold/Cursor";
+import PageExit from "@/components/bold/PageExit";
+import Preloader from "@/components/bold/Preloader";
 import "./globals.css";
 
 const display = Big_Shoulders({ subsets: ["latin"], variable: "--font-display", weight: ["700", "800", "900"], adjustFontFallback: false });
@@ -27,10 +30,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <SmoothScroll />
         <Header />
+        <Backdrop />
         <ArtifactsLayer />
         <main id="top">{children}</main>
         <Footer />
         <Cursor />
+        <PageExit />
+        <Preloader />
       </body>
     </html>
   );

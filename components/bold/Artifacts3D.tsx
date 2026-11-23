@@ -9,9 +9,9 @@ import { scene } from "./formation";
 /* Palette (mirrors the CSS tokens) */
 const INK = "#0d1321";
 const TANGERINE = "#ff6b2c";
-const MINT = "#5ff0b5";
+const MINT = "#c9cfd9";
 const PAPER = "#f2f4f7";
-const SUN = "#ffd23f";
+const SUN = "#ffb38f";
 
 type Kind = "sticky" | "cursor" | "phone" | "toggle" | "code";
 

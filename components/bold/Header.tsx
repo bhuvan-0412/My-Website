@@ -27,7 +27,7 @@ export default function Header() {
     <>
       <header className="hdr">
         <Link href="/" className="hdr__logo" aria-label="Bhuvan Thota, home">
-          BT<span>.</span>
+          Bhuvan Thota<span>.</span>
         </Link>
         <button className="hdr__menu" onClick={() => setOpen((o) => !o)} aria-expanded={open} aria-controls="site-menu">
           <span className="hdr__menu-label">{open ? "Close" : "Menu"}</span>

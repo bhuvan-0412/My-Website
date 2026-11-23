@@ -18,7 +18,7 @@ export default function WorkPage() {
           </Rise>
         </div>
       </section>
-      <section className="sec sec--paper sec--tight">
+      <section className="sec sec--paper work-sec">
         <div className="wrap">
           <WorkGrid />
         </div>

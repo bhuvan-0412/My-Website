@@ -37,7 +37,7 @@ export default function Template({ children }: { children: React.ReactNode }) {
           animate={{ opacity: 0, y: -30 }}
           transition={{ duration: 0.5, ease }}
         >
-          BT.
+          Bhuvan Thota
         </motion.span>
       </motion.div>
       <motion.div initial={{ opacity: 0, y: 60 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1, ease, delay: 0.25 }}>

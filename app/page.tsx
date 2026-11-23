@@ -147,7 +147,7 @@ export default function Home() {
       <section className="sec sec--paper">
         <div className="wrap">
           <div className="sec__head">
-            <LineReveal as="h2" className="display sec__title" lines={["What I", <span key="b" className="t-tangerine">build.</span>]} onView />
+            <LineReveal as="h2" className="display sec__title" lines={[<span key="b">What I <span className="t-tangerine">build.</span></span>]} onView />
             <Rise className="sec__aside">
               <p>Four kinds of work, one habit: check that it worked before calling it done.</p>
               <Link className="pill pill--ink" href="/work">
@@ -181,7 +181,7 @@ export default function Home() {
       <CircleSection className="sec sec--tangerine live" under="paper">
         <div className="wrap">
           <div className="sec__head">
-            <LineReveal as="h2" className="display sec__title" lines={["Live, not", <span key="m" className="t-ink">mockups.</span>]} onView />
+            <LineReveal as="h2" className="display sec__title" lines={[<span key="m">Live, not <span className="t-ink">mockups.</span></span>]} onView />
             <Rise className="sec__aside">
               <p>Real deployments you can open right now, and the code for the ones that run offline.</p>
               <Link className="pill pill--ink" href="/work">
@@ -214,7 +214,7 @@ export default function Home() {
       <section className="sec sec--ink">
         <div className="wrap">
           <div className="sec__head">
-            <LineReveal as="h2" className="display sec__title" lines={["Where I've", <span key="w" className="t-mint">shipped.</span>]} onView />
+            <LineReveal as="h2" className="display sec__title" lines={[<span key="w">Where I&apos;ve <span className="t-tangerine">shipped.</span></span>]} onView />
             <Rise className="sec__aside">
               <p>Two internships so far, one of them leading the team.</p>
             </Rise>

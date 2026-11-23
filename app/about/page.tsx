@@ -16,13 +16,18 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <CircleSection className="sec sec--paper">
+      <CircleSection className="sec sec--paper statement">
         <div className="wrap">
           <ScrollWords
             className="display statement__text"
             text="I care as much about why a product should exist as about how it works, so I build it myself and then go and check."
             accent={["why", "how", "check"]}
           />
+        </div>
+      </CircleSection>
+
+      <section className="sec sec--paper">
+        <div className="wrap">
           <div className="about-grid">
             <Rise className="about-copy">
               {about.paragraphs.slice(1).map((p) => (
@@ -44,7 +49,7 @@ export default function AboutPage() {
             </Rise>
           </div>
         </div>
-      </CircleSection>
+      </section>
 
       <section className="sec sec--ink">
         <div className="wrap">

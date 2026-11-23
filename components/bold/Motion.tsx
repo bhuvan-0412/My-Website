@@ -161,25 +161,16 @@ export function CircleSection({
   children,
   className,
   id,
-  under = "ink",
 }: {
   children: ReactNode;
   className?: string;
   id?: string;
-  /** Colour of the section above, which stays visible outside the growing circle. */
+  /** Kept for compatibility; the colour change now happens on the fixed backdrop. */
   under?: "ink" | "paper" | "tangerine" | "mint";
 }) {
-  const ref = useRef<HTMLElement>(null);
-  const reduce = useReducedMotion();
-  const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "start 0.1"] });
-  const r = useTransform(scrollYProgress, [0, 1], [6, 150]);
-  // Once fully open, drop the clip so cards inside can sit above the 3D layer.
-  const clip = useTransform(r, (v) => (v >= 149 ? "none" : `circle(${v}% at 50% 100%)`));
   return (
-    <section ref={ref} id={id} className={`under under--${under}`}>
-      <motion.div className={className} style={reduce ? undefined : { clipPath: clip }}>
-        {children}
-      </motion.div>
+    <section id={id} className={className}>
+      {children}
     </section>
   );
 }

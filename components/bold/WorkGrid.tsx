@@ -1,8 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
-import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
+import { AnimatePresence, LayoutGroup, motion, useScroll, useTransform } from "framer-motion";
 import { projects, projectMeta, type Kind } from "@/data/site";
 import { Tilt, Wipe } from "./Media";
 
@@ -13,8 +13,35 @@ export default function WorkGrid() {
   const [f, setF] = useState<"All" | Kind>("All");
   const shown = projects.filter((p) => f === "All" || projectMeta[p.id]?.kinds.includes(f));
 
+  // Desktop: the gallery pins to the screen and vertical scrolling slides it sideways.
+  const pin = useRef<HTMLDivElement>(null);
+  const track = useRef<HTMLDivElement>(null);
+  const [dist, setDist] = useState(0);
+  useEffect(() => {
+    const measure = () => {
+      const t = track.current;
+      if (!t || window.matchMedia("(max-width: 900px)").matches) return setDist(0);
+      setDist(Math.max(0, t.scrollWidth - t.clientWidth));
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    if (track.current) ro.observe(track.current);
+    window.addEventListener("resize", measure);
+    const t = window.setTimeout(measure, 800);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", measure);
+      window.clearTimeout(t);
+    };
+  }, [shown.length]);
+  const { scrollYProgress } = useScroll({ target: pin, offset: ["start start", "end end"] });
+  const x = useTransform(scrollYProgress, [0, 1], [0, -dist]);
+  const bar = useTransform(scrollYProgress, [0, 1], [0.08, 1]);
+
   return (
     <LayoutGroup>
+      <div ref={pin} className="hpin" style={{ height: dist ? `calc(100svh + ${dist}px)` : undefined }}>
+      <div className="hpin__sticky">
       <div className="filters" role="group" aria-label="Filter projects">
         {FILTERS.map((k) => {
           const n = k === "All" ? projects.length : projects.filter((p) => projectMeta[p.id]?.kinds.includes(k)).length;
@@ -29,7 +56,8 @@ export default function WorkGrid() {
         })}
       </div>
 
-      <motion.div layout className="work">
+      <div ref={track} className="work-track">
+      <motion.div layout className="work" style={{ x }}>
         <AnimatePresence mode="popLayout">
           {shown.map((p, i) => {
             const meta = projectMeta[p.id];
@@ -88,6 +116,14 @@ export default function WorkGrid() {
           })}
         </AnimatePresence>
       </motion.div>
+      </div>
+      {dist > 0 && (
+        <div className="hpin__bar" aria-hidden>
+          <motion.span style={{ scaleX: bar }} />
+        </div>
+      )}
+      </div>
+      </div>
     </LayoutGroup>
   );
 }
