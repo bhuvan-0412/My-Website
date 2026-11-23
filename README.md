@@ -1,6 +1,14 @@
 # Personal Website
 
-A portfolio site built with Next.js (App Router) and TypeScript: dark/light theme, scroll animations, and responsive down to phone width.
+Bhuvan Thota's portfolio, built with Next.js (App Router), TypeScript, Three.js (React Three Fiber) and Framer Motion.
+
+## Designs (one per branch)
+
+| Branch | Design |
+| --- | --- |
+| `pm-design` | **The launch road.** A drivable low-poly 3D world: scrolling drives a car through Discover, Define, Build, Launch and Measure, and each stop opens that part of the profile. |
+| `electronics-design` | **Signal board.** A 3D circuit board where each project is a chip wired to a core. |
+| `main` | Currently the same as `electronics-design`. |
 
 ## Run it locally
 
@@ -13,13 +21,14 @@ Then open http://localhost:3000.
 
 ## Edit your content
 
-All text, links and lists live in **`data/site.ts`**: name, tagline, about, education, skills, projects, experience, achievements, email and social links. Edit that file and the page updates.
+All text, links and lists live in **`data/site.ts`**: name, headline, about, skills, projects, experience, achievements, the 60-days-of-PM lessons, reels, email and social links.
 
-- **Resume:** put your PDF at `public/resume.pdf`.
-- **Colors:** change the `--accent` tokens at the top of `app/globals.css`.
+- **Stops on the road** (`pm-design`): titles and summary lines are in `lib/stops.ts`.
+- **Resume:** `public/resume.pdf`.
+- **Reels:** edit `reels` in `data/site.ts`. To play a clip on the page, put an `.mp4` in `public/reels/` and set its `video` path.
 
 ## Deploy (free)
 
-1. Push this folder to a GitHub repository.
-2. Import the repository at https://vercel.com/new. It detects Next.js automatically.
-3. Every push to `main` redeploys the site.
+1. Import the repository at https://vercel.com/new. It detects Next.js automatically.
+2. Pick the branch to deploy as production (or merge your favourite design into `main`).
+3. Every push to that branch redeploys the site; other branches get preview links.

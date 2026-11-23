@@ -798,7 +798,7 @@ function Rig({ carRef, active, still, mobile }: { carRef: MutableRefObject<THREE
         .add(new THREE.Vector3(0, mobile ? 17 : 9, 0));
       const view = subject.clone().sub(introCam).normalize();
       const camRight = new THREE.Vector3().crossVectors(view, UP).normalize();
-      const introAt = mobile ? subject.clone().add(new THREE.Vector3(0, 6.5, 0)) : subject.clone().addScaledVector(camRight, -7);
+      const introAt = mobile ? subject.clone().add(new THREE.Vector3(0, 3.5, 0)) : subject.clone().addScaledVector(camRight, -7);
       tmp.cam.lerp(introCam, wi);
       tmp.at.lerp(introAt, wi);
     }

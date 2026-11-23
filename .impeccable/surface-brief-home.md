@@ -1,17 +1,17 @@
-# Surface brief: home (/)
+# Surface brief: home (/) on branch pm-design
 
-Scope: single-page portfolio. Mode: Experience. Audience: internship recruiters for product management, Python, AI and software engineering roles; peers from Instagram/LinkedIn. Action: open a project, download the resume, email.
+Scope: single-page portfolio. Mode: Experience. Audience: internship recruiters for product management (primary), Python, AI and software engineering roles. Action: drive through the profile, open a project, download the resume, email.
 
 ## Direction contract
 
-THESIS: The portfolio is a populated circuit board. Bhuvan's projects are chips soldered to one board, wired to a core, with signals running through them. It refuses the dark-dev-portfolio-with-floating-blob default.
+THESIS: The portfolio is a drive along a product lifecycle road. Each stop (Discover, Define, Build, Launch, Measure) is a landmark holding one part of Bhuvan's profile. It refuses the static hero-plus-sections portfolio.
 
-OWN-WORLD: Drenched solder-mask green (#0f3d2e family) as the page ground; ENIG gold for pads, traces, actions; silkscreen off-white for type; black epoxy chip bodies. Anybody (wide/condensed display), Figtree (body), Martian Mono only for designators, data tables and measurements.
+OWN-WORLD: Sunny low-poly toy world: meadow greens, asphalt road with yellow dashes, a coral car with clearcoat, one saturated colour per stop (sun yellow, sky blue, coral, violet, mint) on white landmarks. Bricolage Grotesque display, Figtree body, JetBrains Mono for small data.
 
-STORY: Visitor sees a real board with his projects on it, tilts it, clicks a chip, lands on that project's signal-flow diagram; reads the datasheet (facts, skills as pin assignments), revision history (internships), the 60-days-of-PM test log, his edited reels, then the connector to contact him.
+STORY: Visitor lands on an establishing shot, starts the drive by scrolling, the car parks at each landmark and a panel summarises that part of the profile; the HUD lets them jump between stops; detail sections below carry the full story; ends at "Next stop: your team".
 
-FIRST VIEWPORT: Full-bleed WebGL board, angled ~50deg, 8 project chips + a core chip labeled BT, pulses running on gold traces. Name and one-line positioning bottom-left, primary action "Explore the board" + resume.
+FIRST VIEWPORT: Name, headline, open-to roles and "Start the drive" on the left over a sky veil; the car and lighthouse on the right; HUD road map at the bottom.
 
-FORM: Code-led; own grounded candidate #1 of 3 (Signal Board), chosen by the user. seed: none (unavailable) - impeccable engine could not download.
+FORM: Code-led; concept 1 of 4 live storyboards (The launch road), chosen by the user. seed: none (pinned) "1 · The launch road".
 
 FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
