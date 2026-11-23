@@ -1,25 +1,24 @@
-import type { Metadata } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import { Anybody, Figtree, Martian_Mono } from "next/font/google";
 import { site } from "@/data/site";
 import "./globals.css";
 
-const sans = Inter({ subsets: ["latin"], variable: "--font-sans" });
-const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" });
+const display = Anybody({ subsets: ["latin"], variable: "--font-display", axes: ["wdth"] });
+const body = Figtree({ subsets: ["latin"], variable: "--font-body" });
+const mono = Martian_Mono({ subsets: ["latin"], variable: "--font-mono" });
 
 export const metadata: Metadata = {
-  title: `${site.name} — ${site.role}`,
-  description: site.tagline,
+  title: `${site.name} · AI products & product management`,
+  description: `${site.headline} Open to internships in product management, Python, AI engineering and software development.`,
 };
 
-// Runs before paint so the saved theme is applied without a flash.
-const themeScript = `(function(){try{var t=localStorage.getItem('theme');if(t)document.documentElement.dataset.theme=t;}catch(e){}})();`;
+export const viewport: Viewport = {
+  themeColor: "#0f3d2e",
+};
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${sans.variable} ${mono.variable}`} suppressHydrationWarning>
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
-      </head>
+    <html lang="en" className={`${display.variable} ${body.variable} ${mono.variable}`}>
       <body>{children}</body>
     </html>
   );

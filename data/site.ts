@@ -5,162 +5,202 @@
 export const site = {
   name: "Bhuvan Thota",
   initials: "BT",
-  role: "AI Engineer & Product Builder",
-  tagline:
-    "I build AI products end to end: agent pipelines, RAG systems and the web apps people actually use. Student at BITS Pilani, Goa.",
-  location: "Goa, India",
+  headline: "I build AI products and think about them like a product manager.",
+  openTo: ["Product management", "Python", "AI engineering", "Software development"],
+  location: "Goa · Hyderabad, India",
   email: "thotabhuvan@gmail.com",
   resumeUrl: "/resume.pdf",
   socials: [
-    { label: "GitHub", url: "https://github.com/bhuvan-0412" },
-    { label: "LinkedIn", url: "https://www.linkedin.com/in/bhuvan-thota" },
-    { label: "Instagram", url: "https://www.instagram.com/its.bhuvan.builds/" },
+    { label: "GitHub", handle: "bhuvan-0412", url: "https://github.com/bhuvan-0412" },
+    { label: "LinkedIn", handle: "bhuvan-thota", url: "https://www.linkedin.com/in/bhuvan-thota" },
+    { label: "Instagram", handle: "@its.bhuvan.builds", url: "https://www.instagram.com/its.bhuvan.builds/" },
   ],
 };
 
 export const about = {
   paragraphs: [
-    "I'm Bhuvan, a dual-degree student at BITS Pilani, K K Birla Goa Campus, studying Electronics & Instrumentation alongside an M.Sc. in Mathematics.",
-    "Most of my time goes into building AI products: multi-agent pipelines, retrieval-augmented chatbots, offline document intelligence and the full-stack apps around them. This summer I led a team at Swecha Telangana that shipped 5 AI prototypes in 2 months.",
-    "I'm also into product management. I built ProdPath, a free 6-week PM course for students preparing for APM internships, and I share what I learn about PM and building AI products on Instagram.",
+    "I'm a dual-degree student at BITS Pilani, K K Birla Goa Campus: Electronics & Instrumentation alongside an M.Sc. in Mathematics.",
+    "I spend most of my time building AI products end to end, from multi-agent pipelines and retrieval chatbots to the web apps around them. This summer I led a team at Swecha Telangana that shipped 5 AI prototypes in 2 months.",
+    "I'm just as interested in why a product should exist as in how it works. I built ProdPath, a free PM course for students, and I'm learning product management in public, one day at a time, on Instagram.",
   ],
-  education: [
-    {
-      school: "BITS Pilani, K K Birla Goa Campus",
-      degree: "B.E. Electronics & Instrumentation + M.Sc. Mathematics",
-      period: "Aug 2024 – Jun 2029",
-      detail: "CGPA: 7.32 / 10",
-    },
-    {
-      school: "Narayana Junior College, Hyderabad",
-      degree: "Class XII",
-      period: "2022 – 2024",
-      detail: "Score: 97%",
-    },
+  ratings: [
+    { key: "Degree", value: "B.E. Electronics & Instrumentation + M.Sc. Mathematics" },
+    { key: "Campus", value: "BITS Pilani, K K Birla Goa" },
+    { key: "Graduating", value: "Jun 2029" },
+    { key: "CGPA", value: "7.32 / 10" },
+    { key: "Class XII", value: "97% · Narayana Junior College" },
+    { key: "Teams led", value: "2 (Swecha, Battlesnake)" },
   ],
 };
 
 export const skills: { group: string; items: string[] }[] = [
-  { group: "Languages", items: ["Python", "SQL", "JavaScript", "C++", "HTML", "CSS"] },
-  {
-    group: "Frameworks & Libraries",
-    items: ["Next.js", "React", "FastAPI", "Flask", "Streamlit", "scikit-learn", "Sentence Transformers"],
-  },
-  {
-    group: "AI / ML",
-    items: ["LLM Agents", "Tool Use", "Structured Outputs", "RAG", "Embeddings", "Semantic Search", "Prompting", "Evals"],
-  },
-  {
-    group: "Databases & Tools",
-    items: ["PostgreSQL", "Supabase", "SQLite", "FAISS", "Ollama", "Docker", "Git", "Vercel", "REST APIs"],
-  },
+  { group: "Languages", items: ["Python", "SQL", "JavaScript", "TypeScript", "C++", "HTML/CSS"] },
+  { group: "AI / ML", items: ["LLM agents", "Tool use", "Structured outputs", "RAG", "Embeddings", "Semantic search", "Evals"] },
+  { group: "Frameworks", items: ["Next.js", "React", "FastAPI", "Flask", "Streamlit", "scikit-learn"] },
+  { group: "Data & infra", items: ["PostgreSQL", "Supabase", "SQLite", "FAISS", "Ollama", "Docker", "Vercel"] },
+  { group: "Product", items: ["PRDs", "User research", "Prioritisation", "Competitive analysis", "Roadmaps"] },
 ];
 
 export type Project = {
+  id: string;
   title: string;
+  /** Short reference designator printed on the 3D chip. */
+  ref: string;
   badge?: string;
   description: string;
+  /** The project's signal flow, drawn as a pipeline. */
+  flow: string[];
   tech: string[];
   links: { label: string; url: string }[];
 };
 
 export const projects: Project[] = [
   {
+    id: "viralspy",
     title: "ViralSpy",
+    ref: "U1",
     badge: "Swecha internship",
     description:
-      "Helps creators catch topics trending on Reels, Shorts and Reddit before they peak, with a content brief for each. A 4-agent pipeline does velocity scoring, Z-score spike detection, per-niche re-ranking and LLM-generated JSON briefs.",
-    tech: ["Next.js", "Supabase", "PostgreSQL", "LLM Agents"],
-    links: [{ label: "Live", url: "https://viral-spy-eight.vercel.app" }],
+      "Helps creators catch topics trending on Reels, Shorts and Reddit before they peak, with a ready content brief for each one.",
+    flow: ["Reels · Shorts · Reddit", "Velocity score", "Z-score spikes", "Per-niche re-rank", "LLM brief (JSON)"],
+    tech: ["Next.js", "Supabase", "PostgreSQL", "4 agents"],
+    links: [{ label: "Live site", url: "https://viral-spy-eight.vercel.app" }],
   },
   {
-    title: "Battlesnake AI Agent",
+    id: "battlesnake",
+    title: "Battlesnake AI",
+    ref: "U2",
     badge: "2nd place · Storming Aurora hackathon",
     description:
-      "Autonomous Battlesnake bot built in 12 hours with a team of 4 that I led. Flood fill, Voronoi territory control, iterative-deepening minimax and opponent modelling. 87.5% win rate, 74 unit tests, 13 ms average latency against a 500 ms limit.",
-    tech: ["Python", "Minimax", "REST API"],
+      "An autonomous snake bot built in 12 hours by a team of 4 that I led. I analysed 27+ test matches and fixed the most common causes of death first.",
+    flow: ["Game state (REST)", "Flood fill", "Voronoi territory", "Minimax search", "Move in 13 ms"],
+    tech: ["Python", "74 unit tests", "87.5% win rate"],
     links: [
-      {
-        label: "Certificate",
-        url: "https://drive.google.com/file/d/15e6r7oKfX_W7aavizHTLom2gdv2cjqVp/view?usp=sharing",
-      },
+      { label: "Certificate", url: "https://drive.google.com/file/d/15e6r7oKfX_W7aavizHTLom2gdv2cjqVp/view?usp=sharing" },
     ],
   },
   {
+    id: "prodpath",
     title: "ProdPath",
+    ref: "U3",
     badge: "Live learning platform",
     description:
-      "A free 6-week product management course for college students preparing for APM internships: day-by-day lessons, a searchable resource library and a milestone timeline, with progress saved in the browser.",
+      "A free 6-week product management course for college students preparing for APM internships. 10+ sign-ups.",
+    flow: ["6-week plan", "Daily lessons", "Resource library", "Milestones", "Progress saved"],
     tech: ["Next.js", "Tailwind CSS", "Vercel"],
-    links: [{ label: "Live", url: "https://prodpath.vercel.app" }],
+    links: [{ label: "Live site", url: "https://prodpath.vercel.app" }],
   },
   {
+    id: "resovault",
     title: "ResoVault",
+    ref: "U4",
     description:
-      "Saves links across devices, with bulk import from chat messages: an LLM parses chat text into links. A daily cron job ingests news ranked per user by engagement-weighted click logs.",
+      "Saves links across devices and bulk-imports them straight from chat messages. A daily job brings in news, ranked for each user by what they click.",
+    flow: ["Chat text", "LLM link parser", "Postgres + RLS", "Daily news cron", "Per-user ranking"],
     tech: ["Next.js", "TypeScript", "Supabase", "Google OAuth"],
-    links: [{ label: "Live", url: "https://resovault.vercel.app" }],
+    links: [{ label: "Live site", url: "https://resovault.vercel.app" }],
   },
   {
+    id: "econchain",
     title: "EconChain AI",
+    ref: "U5",
     description:
-      "Turns invoices, trade reports and policy notices into structured data with supply-chain risk flags, fully offline. PyMuPDF and Tesseract OCR extract text; a quantised Qwen 2.5 3B model on Ollama returns schema-based JSON.",
-    tech: ["Python", "Ollama", "OCR", "SQLite", "Docker"],
+      "Turns invoices, trade reports and policy notices into structured data with supply-chain risk flags. Runs fully offline.",
+    flow: ["PDF / scan", "PyMuPDF + OCR", "Qwen 2.5 3B (Ollama)", "Schema JSON", "Risk flags"],
+    tech: ["Python", "Ollama", "Tesseract", "SQLite", "Docker"],
     links: [{ label: "GitHub", url: "https://github.com/bhuvan-0412/EconChain---offline-first-CPU-powered-AI" }],
   },
   {
-    title: "Tillu RAG Assistant",
-    description:
-      "Answers questions about an uploaded PDF or TXT using only that document. Chunks the text, embeds it with Sentence Transformers, retrieves the closest chunks from a FAISS index and answers via the Groq API.",
-    tech: ["Python", "FAISS", "Sentence Transformers", "Groq"],
+    id: "tillu",
+    title: "Tillu RAG",
+    ref: "U6",
+    description: "Answers questions about an uploaded PDF or text file using only that document.",
+    flow: ["PDF / TXT", "Chunk 300w, 50 overlap", "Sentence Transformers", "FAISS search", "Groq answer"],
+    tech: ["Python", "FAISS", "Groq API"],
     links: [{ label: "GitHub", url: "https://github.com/bhuvan-0412/Personal_Chatbot" }],
   },
   {
+    id: "quicksewa",
     title: "QuickSewa",
-    description:
-      "A photo-based civic complaint app: snap a photo of the problem and Gemini Vision turns it into a categorised complaint.",
+    ref: "U7",
+    description: "A civic complaint app: snap a photo of the problem and it becomes a categorised complaint.",
+    flow: ["Photo", "Gemini Vision", "Category + details", "Complaint filed"],
     tech: ["Gemini Vision", "Next.js"],
-    links: [{ label: "Live", url: "https://quick-sewa.vercel.app" }],
+    links: [{ label: "Live site", url: "https://quick-sewa.vercel.app" }],
   },
   {
+    id: "agrosense",
     title: "AgroSense",
-    description: "A crop and fertiliser recommender for farmers, powered by 3 machine learning models.",
-    tech: ["Python", "scikit-learn", "ML"],
-    links: [{ label: "Live", url: "https://agrosense-soilmonitoring.vercel.app" }],
+    ref: "U8",
+    description: "Recommends the right crop and fertiliser for a field from its soil readings.",
+    flow: ["Soil readings", "3 ML models", "Crop pick", "Fertiliser pick"],
+    tech: ["Python", "scikit-learn"],
+    links: [{ label: "Live site", url: "https://agrosense-soilmonitoring.vercel.app" }],
   },
 ];
 
 export const experience: {
+  rev: string;
   title: string;
   org: string;
   period: string;
+  place: string;
   points: string[];
 }[] = [
   {
+    rev: "B",
     title: "AI Research & Open Source Intern",
     org: "Swecha Telangana",
-    period: "May 2026 – Jul 2026 · Hyderabad",
+    period: "May – Jul 2026",
+    place: "Hyderabad",
     points: [
-      "Team lead: led a team that built 5 AI prototypes in 2 months, planning the scope and assigning work.",
-      "Built ViralSpy, a 4-agent trend-detection pipeline, plus QuickSewa and AgroSense.",
-      "Built a RAG chatbot (FAISS + Sentence Transformers + Groq) and EconChain AI, an offline document-intelligence tool on Ollama.",
+      "Team lead: planned scope and assigned work for a team that built 5 AI prototypes in 2 months.",
+      "Built ViralSpy, QuickSewa, AgroSense, the Tillu RAG assistant and EconChain AI.",
       "Submitted an open-source merge request (under review).",
     ],
   },
   {
+    rev: "A",
     title: "AI Systems Testing Intern",
     org: "Gnani.ai",
-    period: "Jul 2025 – Aug 2025 · Remote",
+    period: "Jul – Aug 2025",
+    place: "Remote",
     points: [
-      "Evaluated AI voice agent output across 600+ live conversations, labelling each as a success or failure.",
-      "Grouped recurring intent-mapping and response failures by cause and reported 100+ improvements to the team.",
+      "Evaluated an AI voice agent across 600+ live conversations, labelling each a success or failure.",
+      "Grouped recurring intent-mapping and response failures by cause and reported 100+ improvements.",
     ],
   },
 ];
 
 export const achievements: string[] = [
-  "2nd Place, Storming Aurora 12-hour Hackathon, BITS Goa (Battlesnake AI Agent)",
-  "Dance Club, BITS Goa: 2nd Place (2026) and 3rd Place (2025) in group dance competitions",
-  "@its.bhuvan.builds on Instagram: 25+ posts on learning PM and building AI products, 200+ followers",
-  "Scored 97% in Class XII",
+  "2nd place, Storming Aurora 12-hour hackathon, BITS Goa",
+  "Dance Club, BITS Goa: 2nd place (2026) and 3rd place (2025), group dance",
+  "@its.bhuvan.builds: 25+ posts on PM and AI, 200+ followers",
+];
+
+/** Lessons from the "60 days of PM" Instagram series, in Bhuvan's own captions. */
+export const pmSeries: { day: number; lesson: string; url: string }[] = [
+  { day: 22, lesson: "Behind every cool app is a whole lot of servers, cloud magic and product strategy.", url: "https://www.instagram.com/its.bhuvan.builds/reel/Dfwn4hRsFrg/" },
+  { day: 21, lesson: "Not a developer, still gotta know what's happening under the hood.", url: "https://www.instagram.com/its.bhuvan.builds/reel/Dfjqsn5zdv3/" },
+  { day: 20, lesson: "A clear PRD today saves a thousand questions tomorrow.", url: "https://www.instagram.com/its.bhuvan.builds/reel/Dfd2_UQTfB6/" },
+  { day: 19, lesson: "Stop pitching features. Start finding problems.", url: "https://www.instagram.com/its.bhuvan.builds/reel/DfXazHpzIlv/" },
+  { day: 18, lesson: "Compliments don't validate an idea, behaviour does.", url: "https://www.instagram.com/its.bhuvan.builds/reel/DfSf-gdzWtc/" },
+  { day: 17, lesson: "Explain who a product is for, what problem it solves and why it beats the alternatives.", url: "https://www.instagram.com/its.bhuvan.builds/reel/DfPhxJeTEwK/" },
+  { day: 16, lesson: "Less chaos, more clarity: visualise tasks, prioritise better, keep the team in sync.", url: "https://www.instagram.com/its.bhuvan.builds/reel/DfCgwiSsSEn/" },
+  { day: 15, lesson: "Plan it all or figure it out as you go? Both have a strategy.", url: "https://www.instagram.com/its.bhuvan.builds/reel/De9HQYQsegJ/" },
+  { day: 14, lesson: "The right priorities turn effort into impact.", url: "https://www.instagram.com/its.bhuvan.builds/reel/De3-cbRzZIP/" },
+  { day: 13, lesson: "Understanding the how, what and where of business growth.", url: "https://www.instagram.com/its.bhuvan.builds/reel/Dey3JVTspRK/" },
+  { day: 12, lesson: "Know your competition, read the room, make smarter business moves.", url: "https://www.instagram.com/its.bhuvan.builds/reel/DewU5jesFEJ/" },
+  { day: 11, lesson: "Analyse. Strategise. Grow.", url: "https://www.instagram.com/its.bhuvan.builds/reel/DetERK7Mo9m/" },
+];
+
+/**
+ * Reels for the video-editing section. Replace these with the ones you pick.
+ * Optional `video`: put an .mp4 in /public/reels/ and set e.g. "/reels/day-22.mp4"
+ * to play it right on the page (muted, on hover / when in view).
+ */
+export const reels: { title: string; note: string; url: string; video?: string }[] = [
+  { title: "Day 22", note: "Servers, cloud and product strategy", url: "https://www.instagram.com/its.bhuvan.builds/reel/Dfwn4hRsFrg/" },
+  { title: "Day 20", note: "Why a clear PRD matters", url: "https://www.instagram.com/its.bhuvan.builds/reel/Dfd2_UQTfB6/" },
+  { title: "Day 17", note: "Positioning a product", url: "https://www.instagram.com/its.bhuvan.builds/reel/DfPhxJeTEwK/" },
 ];
