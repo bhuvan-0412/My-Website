@@ -153,7 +153,7 @@ function Trees({ count }: { count: number }) {
     while (out.length < count && guard++ < count * 30) {
       const x = -50 + r() * 160;
       const z = -170 + r() * 210;
-      const nearRoad = samples.some((p) => (p.x - x) ** 2 + (p.z - z) ** 2 < 42);
+      const nearRoad = samples.some((p) => (p.x - x) ** 2 + (p.z - z) ** 2 < 130);
       const nearSite = SITES.some((s) => (s.building.x - x) ** 2 + (s.building.z - z) ** 2 < 70);
       if (nearRoad || nearSite) continue;
       out.push({ x, z, s: 0.7 + r() * 0.9, c: r() });
@@ -370,7 +370,7 @@ function Rocket({ active, still }: { active: boolean; still: boolean }) {
   const c = STOPS[3].color;
   useFrame((s, dt) => {
     if (!rocket.current) return;
-    const lift = active ? 2.2 + Math.sin(s.clock.elapsedTime * 2) * 0.25 : 0;
+    const lift = active ? 1.3 + Math.sin(s.clock.elapsedTime * 2) * 0.2 : 0;
     rocket.current.position.y = THREE.MathUtils.damp(rocket.current.position.y, lift, 3, dt);
     if (flame.current) {
       const on = active ? 1 : 0.35;
@@ -440,11 +440,11 @@ function Chart({ active }: { active: boolean }) {
           <meshStandardMaterial color={i === 3 ? c : "#cbeedd"} flatShading />
         </mesh>
       ))}
-      <mesh position={[0.3, 6.1, 0]} rotation={[0, 0, 0.62]} castShadow>
-        <boxGeometry args={[6.6, 0.28, 0.28]} />
+      <mesh position={[0.1, 5.3, 0.9]} rotation={[0, 0, 0.65]} castShadow>
+        <boxGeometry args={[6.3, 0.26, 0.26]} />
         <meshStandardMaterial color="#14202e" />
       </mesh>
-      <mesh position={[3.1, 7.95, 0]} rotation={[0, 0, -Math.PI / 2 + 0.62]} castShadow>
+      <mesh position={[2.85, 7.45, 0.9]} rotation={[0, 0, -Math.PI / 2 + 0.65]} castShadow>
         <coneGeometry args={[0.5, 1, 8]} />
         <meshStandardMaterial color="#14202e" />
       </mesh>
@@ -622,12 +622,12 @@ function Rig({ carRef, active, still, mobile }: { carRef: MutableRefObject<THREE
     const forward = tmp.t.set(Math.sin(car.rotation.y), 0, Math.cos(car.rotation.y));
     const left = leftOf(forward);
     const back = mobile ? 15 : 12;
-    const height = mobile ? 9.5 : 7;
+    const height = mobile ? 11 : 9;
     // Camera sits behind and to the right, so the buildings on the left fill the frame.
     tmp.cam
       .copy(car.position)
       .addScaledVector(forward, -back)
-      .addScaledVector(left, -5)
+      .addScaledVector(left, -3)
       .add(new THREE.Vector3(0, height, 0));
     if (!mobile && !still) {
       tmp.cam.addScaledVector(left, -state.pointer.x * 2);
@@ -654,13 +654,30 @@ function Rig({ carRef, active, still, mobile }: { carRef: MutableRefObject<THREE
         .clone()
         .addScaledVector(right, mobile ? 17 : 14)
         .addScaledVector(s.tangent, mobile ? -9 : -8)
-        .add(new THREE.Vector3(0, mobile ? 11 : 8.5, 0));
+        .add(new THREE.Vector3(0, mobile ? 12 : 10, 0));
       // Desktop keeps the building left of centre (the panel sits on the right);
       // phones keep it in the top half (the panel sits at the bottom).
-      const frameAt = s.road.clone().lerp(s.building, mobile ? 0.6 : 0.3).add(new THREE.Vector3(0, mobile ? -0.5 : 2.4, 0));
+      const frameAt = s.road.clone().lerp(s.building, mobile ? 0.6 : 0.3).add(new THREE.Vector3(0, mobile ? 0.5 : 3.6, 0));
       if (!mobile) frameAt.addScaledVector(right, 3.5).addScaledVector(s.tangent, 2);
       tmp.cam.lerp(frameCam, w);
       tmp.at.lerp(frameAt, w);
+    }
+    // Before the drive starts: an establishing shot with the car and the first landmark
+    // on the right, leaving the left side clear for the intro copy.
+    const wi = THREE.MathUtils.smoothstep(0.03, 0.0, cu);
+    if (wi > 0) {
+      const s0 = SITES[0];
+      const subject = car.position.clone().lerp(s0.building, 0.45).add(new THREE.Vector3(0, 2, 0));
+      const introCam = car.position
+        .clone()
+        .addScaledVector(forward, mobile ? -16 : -13)
+        .addScaledVector(left, mobile ? -4 : -10)
+        .add(new THREE.Vector3(0, mobile ? 13 : 9, 0));
+      const view = subject.clone().sub(introCam).normalize();
+      const camRight = new THREE.Vector3().crossVectors(view, UP).normalize();
+      const introAt = mobile ? subject.clone().add(new THREE.Vector3(0, 3, 0)) : subject.clone().addScaledVector(camRight, -7);
+      tmp.cam.lerp(introCam, wi);
+      tmp.at.lerp(introAt, wi);
     }
     void active;
 
