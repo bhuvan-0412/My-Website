@@ -204,3 +204,75 @@ export const reels: { title: string; note: string; url: string; video?: string }
   { title: "Day 20", note: "Why a clear PRD matters", url: "https://www.instagram.com/its.bhuvan.builds/reel/Dfd2_UQTfB6/" },
   { title: "Day 17", note: "Positioning a product", url: "https://www.instagram.com/its.bhuvan.builds/reel/DfPhxJeTEwK/" },
 ];
+
+/* ── Extra data for the bold design ─────────────────────── */
+
+export type Kind = "AI" | "Product" | "Web" | "Hackathon";
+
+/** How each project is filed on the Work page, and its screenshot (if the project is live). */
+export const projectMeta: Record<string, { kinds: Kind[]; image?: string; status: string }> = {
+  viralspy: { kinds: ["AI", "Web"], image: "/work/viralspy.png", status: "Live" },
+  battlesnake: { kinds: ["AI", "Hackathon"], status: "2nd place" },
+  prodpath: { kinds: ["Product", "Web"], image: "/work/prodpath.png", status: "Live" },
+  resovault: { kinds: ["Web", "AI"], image: "/work/resovault.png", status: "Live" },
+  econchain: { kinds: ["AI"], status: "Open source" },
+  tillu: { kinds: ["AI"], status: "Open source" },
+  quicksewa: { kinds: ["AI", "Web"], image: "/work/quicksewa.png", status: "Live" },
+  agrosense: { kinds: ["AI", "Web"], image: "/work/agrosense.png", status: "Live" },
+};
+
+/** Numbers for the ticker. Every one traces back to the resume. */
+export const stats: string[] = [
+  "5 AI prototypes in 2 months",
+  "600+ voice-agent conversations evaluated",
+  "100+ improvements reported",
+  "2nd place, 12-hour hackathon",
+  "87.5% bot win rate",
+  "Day 22 of 60 learning PM in public",
+  "8 products built",
+  "200+ followers on @its.bhuvan.builds",
+];
+
+/** The four kinds of work, for the home page. */
+export const areas: { title: string; text: string; tags: string[] }[] = [
+  {
+    title: "AI systems",
+    text: "Multi-agent pipelines, retrieval chatbots and offline document intelligence that return structured, checkable output.",
+    tags: ["LLM agents", "RAG", "FAISS", "Ollama"],
+  },
+  {
+    title: "Product thinking",
+    text: "Framing the problem before the feature: PRDs, user research, prioritisation, and a free PM course for students.",
+    tags: ["PRDs", "ProdPath", "60-day PM log"],
+  },
+  {
+    title: "Web apps",
+    text: "Full-stack Next.js and Supabase apps with auth, row-level security and scheduled jobs, shipped to Vercel.",
+    tags: ["Next.js", "Supabase", "Postgres"],
+  },
+  {
+    title: "Content",
+    text: "I script, film and edit reels that explain product ideas in under a minute.",
+    tags: ["Reels", "Editing", "Storytelling"],
+  },
+];
+
+/** Short answers to what recruiters usually ask. */
+export const faqs: { q: string; a: string }[] = [
+  {
+    q: "What roles are you looking for?",
+    a: "Internships in product management, Python, AI engineering and software development.",
+  },
+  {
+    q: "Are you more of a PM or an engineer?",
+    a: "Both, on purpose. I build the thing myself, and I care about whether it should exist and whether people use it.",
+  },
+  {
+    q: "Have you led a team?",
+    a: "Yes. At Swecha I led the team that built 5 AI prototypes in 2 months, and I led our 4-person team to 2nd place at the Storming Aurora hackathon.",
+  },
+  {
+    q: "Where can I see your resume?",
+    a: "It's a one-page PDF, linked in the menu and the footer.",
+  },
+];

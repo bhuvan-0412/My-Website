@@ -1,25 +1,35 @@
 import type { Metadata, Viewport } from "next";
-import { Bricolage_Grotesque, Figtree, JetBrains_Mono } from "next/font/google";
+import { Big_Shoulders, Figtree, JetBrains_Mono } from "next/font/google";
 import { site } from "@/data/site";
+import SmoothScroll from "@/components/SmoothScroll";
+import Header from "@/components/bold/Header";
+import Footer from "@/components/bold/Footer";
+import ArtifactsLayer from "@/components/bold/ArtifactsLayer";
 import "./globals.css";
 
-const display = Bricolage_Grotesque({ subsets: ["latin"], variable: "--font-display", axes: ["wdth", "opsz"] });
+const display = Big_Shoulders({ subsets: ["latin"], variable: "--font-display", weight: ["700", "800", "900"] });
 const body = Figtree({ subsets: ["latin"], variable: "--font-body" });
 const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" });
 
 export const metadata: Metadata = {
-  title: `${site.name} · product, AI and software`,
+  title: { default: `${site.name} · I build AI products, and I think like a PM`, template: `%s · ${site.name}` },
   description: `${site.headline} Open to internships in product management, Python, AI engineering and software development.`,
 };
 
 export const viewport: Viewport = {
-  themeColor: "#cde8f7",
+  themeColor: "#0d1321",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${display.variable} ${body.variable} ${mono.variable}`}>
-      <body>{children}</body>
+      <body>
+        <SmoothScroll />
+        <Header />
+        <ArtifactsLayer />
+        <main id="top">{children}</main>
+        <Footer />
+      </body>
     </html>
   );
 }
