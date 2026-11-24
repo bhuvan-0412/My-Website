@@ -51,7 +51,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <section className="sec sec--ink" data-shape="flag">
+      <section className="sec sec--ink" data-shape="briefcase">
         <div className="wrap">
           <div className="sec__head">
             <LineReveal as="h2" className="display sec__title" lines={["Timeline"]} onView />

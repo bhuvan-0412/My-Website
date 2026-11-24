@@ -14,6 +14,14 @@ const arc = (cx: number, cy: number, r: number, a0: number, a1: number, n = 24):
   });
 const circle = (cx: number, cy: number, r: number, n = 28) => arc(cx, cy, r, 90, 450, n);
 const rect = (x0: number, y0: number, x1: number, y1: number): Stroke => [[x0, y0], [x1, y0], [x1, y1], [x0, y1], [x0, y0]];
+/** Rounded rectangle, drawn as one closed stroke. */
+const rrect = (x0: number, y0: number, x1: number, y1: number, r: number): Stroke => [
+  ...arc(x1 - r, y1 - r, r, 0, 90, 6),
+  ...arc(x0 + r, y1 - r, r, 90, 180, 6),
+  ...arc(x0 + r, y0 + r, r, 180, 270, 6),
+  ...arc(x1 - r, y0 + r, r, 270, 360, 6),
+  [x1, y1 - r],
+];
 
 export const SYMBOLS: Record<string, Stroke[]> = {
   // An idea: a lightbulb with a few rays.
@@ -57,6 +65,14 @@ export const SYMBOLS: Record<string, Stroke[]> = {
   ],
   // Shipped: a check inside a circle.
   check: [circle(0, 0, 0.86, 36), [[-0.42, 0.02], [-0.1, -0.32], [0.46, 0.34]]],
+  // Experience: a briefcase.
+  briefcase: [
+    rrect(-0.92, -0.7, 0.92, 0.42, 0.12),
+    [[-0.32, 0.42], [-0.32, 0.66], [0.32, 0.66], [0.32, 0.42]],
+    [[-0.92, -0.06], [-0.14, -0.06]],
+    [[0.14, -0.06], [0.92, -0.06]],
+    rrect(-0.14, -0.18, 0.14, 0.06, 0.04),
+  ],
   // Experience: a milestone flag.
   flag: [
     [[-0.5, -0.92], [-0.5, 0.88]],

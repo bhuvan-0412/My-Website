@@ -213,7 +213,7 @@ export default function Home() {
       </CircleSection>
 
       {/* ── Experience: internships + the channel, as dropdowns ─ */}
-      <section className="sec sec--ink experience" data-shape="flag">
+      <section className="sec sec--ink experience" data-shape="briefcase">
         <div className="wrap">
           <div className="sec__head">
             <LineReveal as="h2" className="display sec__title" lines={[<span key="w">Where I&apos;ve <span className="t-tangerine">worked.</span></span>]} onView />

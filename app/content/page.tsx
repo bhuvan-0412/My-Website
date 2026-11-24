@@ -70,7 +70,7 @@ export default function ContentPage() {
           <div className="reels-intro">
             <LineReveal as="h2" className="display sec__title" lines={["Cut by", <span key="m" className="t-tangerine">me.</span>]} onView />
             <Rise className="sec__aside">
-              <p>I edit every reel myself. Start with the one about me, then a few I&apos;m proud of.</p>
+              <p>I edit every reel myself. These are my best edits, picked by what people liked most. Tap one to watch it here.</p>
               <ul className="edit-skills">
                 {["Hooks", "Pacing", "Cuts", "Captions", "On-screen type", "Storytelling"].map((k) => (
                   <li key={k}>{k}</li>

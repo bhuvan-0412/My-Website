@@ -34,7 +34,7 @@ const PLANE_Z = -5.5;
 const CAM_Z = 22;
 
 /** Elements a press should leave alone (they have their own clicks or text). */
-const INTERACTIVE = "a, button, input, textarea, select, label, summary, [role=button], .chip, .faq, .role, .lesson, .reel, .work__item";
+const INTERACTIVE = ".player, a, button, input, textarea, select, label, summary, [role=button], .chip, .faq, .role, .lesson, .reel, .work__item";
 const TEXTY = "p, h1, h2, h3, h4, li, dd, dt, span, blockquote, figcaption";
 
 function rng(seed: number) {
@@ -44,6 +44,8 @@ function rng(seed: number) {
   };
 }
 const smooth = (x: number) => x * x * (3 - 2 * x);
+/** How fast a held ball of particles swirls (radians per second). */
+const SWIRL = 2.4;
 
 /* ── Product artifacts (the orbiters) ─────────────────────── */
 function codeTexture() {
@@ -168,6 +170,7 @@ const ORBITERS: { kind: Kind; color: string; base: number }[] = [
 const vert = /* glsl */ `
   attribute float aSize;
   attribute float aKind;
+  attribute float aHot;
   uniform float uSize;
   uniform float uDpr;
   uniform vec3 uBg;      // weights: ink, paper, tangerine backgrounds
@@ -179,8 +182,11 @@ const vert = /* glsl */ `
   void main() {
     vec4 mv = modelViewMatrix * vec4(position, 1.0);
     gl_Position = projectionMatrix * mv;
-    gl_PointSize = uSize * aSize * uDpr * (${(CAM_Z - PLANE_Z).toFixed(1)} / -mv.z);
+    gl_PointSize = uSize * aSize * (1.0 + aHot * 0.8) * uDpr * (${(CAM_Z - PLANE_Z).toFixed(1)} / -mv.z);
     vColor = uBg.x * pick(uOnInk, aKind) + uBg.y * pick(uOnPaper, aKind) + uBg.z * pick(uOnTan, aKind);
+    // Held particles glow: warm white on dark, deep tangerine on paper, ink on tangerine.
+    vec3 hot = uBg.x * vec3(1.0, 0.86, 0.74) + uBg.y * vec3(0.93, 0.33, 0.1) + uBg.z * vec3(0.05, 0.07, 0.13);
+    vColor = mix(vColor, hot, aHot * 0.55);
   }
 `;
 const frag = /* glsl */ `
@@ -256,6 +262,10 @@ function Field({ mobile, still, path }: { mobile: boolean; still: boolean; path:
     geo.setAttribute("position", attr);
     geo.setAttribute("aSize", new THREE.BufferAttribute(sizes, 1));
     geo.setAttribute("aKind", new THREE.BufferAttribute(kinds, 1));
+    const hot = new Float32Array(N);
+    const hotAttr = new THREE.BufferAttribute(hot, 1);
+    hotAttr.setUsage(THREE.DynamicDrawUsage);
+    geo.setAttribute("aHot", hotAttr);
     const mat = new THREE.ShaderMaterial({
       vertexShader: vert,
       fragmentShader: frag,
@@ -273,7 +283,7 @@ function Field({ mobile, still, path }: { mobile: boolean; still: boolean; path:
     });
     const points = new THREE.Points(geo, mat);
     points.frustumCulled = false;
-    return { pos, vel, home, scat, k, loose, phase, geo, mat, points, attr, grabbed: new Uint8Array(N), off: new Float32Array(N * 2), free: new Float32Array(N) };
+    return { pos, vel, home, scat, k, loose, phase, geo, mat, points, attr, hot, hotAttr, grabbed: new Uint8Array(N), off: new Float32Array(N * 3), pull: new Float32Array(N), free: new Float32Array(N) };
   }, [N, mobile]);
 
   /* Orbiters */
@@ -326,6 +336,8 @@ function Field({ mobile, still, path }: { mobile: boolean; still: boolean; path:
     plOk: false,
     grabbing: "" as "" | "particles" | "orbiter",
     grabOrbiter: -1,
+    grabStart: new THREE.Vector3(),
+    grabAt: 0,
     lastHint: "",
   });
 
@@ -570,20 +582,36 @@ function Field({ mobile, still, path }: { mobile: boolean; still: boolean; path:
         } else {
           // Judge by where particles belong (hovering pushes them away from the cursor),
           // and take a generous chunk so it feels like grabbing part of the icon.
-          const R2 = (S.scale * 0.34) ** 2;
+          const R2 = (S.scale * 0.36) ** 2;
+          const Rout2 = R2 * 5;
+          const ball = S.scale * 0.17;
           let c = 0;
           for (let i = 0; i < N; i++) {
             const dx = P.home[i * 3] - S.pl.x;
             const dyy = P.home[i * 3 + 1] - S.pl.y;
-            if (dx * dx + dyy * dyy < R2) {
+            const d2 = dx * dx + dyy * dyy;
+            if (d2 < R2) {
+              // A spot inside a soft ball (even spread via the golden ratio), with some depth.
               P.grabbed[i] = 1;
-              P.off[i * 2] = dx * 0.55;
-              P.off[i * 2 + 1] = dyy * 0.55;
+              const rr = ball * Math.sqrt((i * 0.618034) % 1);
+              const a = P.phase[i];
+              P.off[i * 3] = Math.cos(a) * rr;
+              P.off[i * 3 + 1] = Math.sin(a) * rr;
+              P.off[i * 3 + 2] = (P.loose[i] - 0.775) * ball * 3;
               c++;
+            } else if (d2 < Rout2) {
+              // Neighbours stretch toward the drag like taffy, more the closer they are.
+              P.pull[i] = 0.6 * (1 - Math.sqrt(d2 / Rout2));
             }
           }
-          if (c > 20 && S.s < 0.35) S.grabbing = "particles";
-          else P.grabbed.fill(0);
+          if (c > 20 && S.s < 0.35) {
+            S.grabbing = "particles";
+            S.grabStart.copy(S.pl);
+            S.grabAt = t;
+          } else {
+            P.grabbed.fill(0);
+            P.pull.fill(0);
+          }
         }
       }
     }
@@ -594,19 +622,26 @@ function Field({ mobile, still, path }: { mobile: boolean; still: boolean; path:
       if (S.grabbing === "orbiter") {
         const o = O[S.grabOrbiter];
         o.grabbed = false;
-        o.vel.copy(S.pv).multiplyScalar(1.5);
+        o.vel.set(S.pv.x * 1.4 + o.vel.x * 0.4, S.pv.y * 1.4 + o.vel.y * 0.4, o.vel.z);
         o.spin.set(S.pv.y, S.pv.x, S.pv.length() * 0.3).multiplyScalar(0.45);
         o.free = 1.2;
       } else if (S.grabbing === "particles") {
+        const spinR = (t - S.grabAt) * SWIRL;
+        const cr = Math.cos(spinR);
+        const sr = Math.sin(spinR);
         for (let i = 0; i < N; i++) {
           if (!P.grabbed[i]) continue;
-          const f = 1.2 + P.loose[i] * 0.8;
-          P.vel[i * 3] = S.pv.x * f + (P.loose[i] - 0.78) * 4;
-          P.vel[i * 3 + 1] = S.pv.y * f + (P.phase[i] / Math.PI - 1) * 2;
-          P.vel[i * 3 + 2] = (P.loose[i] - 0.75) * 8;
-          P.free[i] = 0.9 + P.loose[i] * 0.6;
+          const ox = P.off[i * 3] * cr - P.off[i * 3 + 1] * sr;
+          const oy = P.off[i * 3] * sr + P.off[i * 3 + 1] * cr;
+          const f = 1.1 + P.loose[i] * 0.9;
+          // Cursor speed + swirl (tangential) + a small outward pop so the ball blooms open.
+          P.vel[i * 3] = S.pv.x * f - oy * SWIRL * 1.4 + ox * 5;
+          P.vel[i * 3 + 1] = S.pv.y * f + ox * SWIRL * 1.4 + oy * 5;
+          P.vel[i * 3 + 2] = P.off[i * 3 + 2] * 4;
+          P.free[i] = 0.9 + P.loose[i] * 0.7;
         }
         P.grabbed.fill(0);
+        P.pull.fill(0);
       }
       if (I.dragged) I.burst = false;
       S.grabbing = "";
@@ -650,24 +685,50 @@ function Field({ mobile, still, path }: { mobile: boolean; still: boolean; path:
     const vel = P.vel;
     const hoverR2 = (S.scale * 0.18) ** 2;
     const hover = S.plOk && !S.grabbing && !mobile;
+    const holding = S.grabbing === "particles";
+    const spinA = (t - S.grabAt) * SWIRL;
+    const ca = Math.cos(spinA);
+    const sa = Math.sin(spinA);
+    const dragX = holding ? S.pl.x - S.grabStart.x : 0;
+    const dragY = holding ? S.pl.y - S.grabStart.y : 0;
+    // The ball breathes a little while held.
+    const breathe = 1 + Math.sin(t * 3.2) * 0.06;
     let near = 0;
     for (let i = 0; i < N; i++) {
       const i3 = i * 3;
+      // Glow rises while held and fades out along the throw.
+      const hotT = P.grabbed[i] ? 1 : 0;
+      P.hot[i] += (hotT - P.hot[i]) * Math.min(1, dt * (hotT ? 6 : 1.3));
       if (P.grabbed[i]) {
-        // Each held particle follows at its own pace, so the chunk trails like a comet.
-        const f = Math.min(1, dt * (8 + 16 * P.loose[i]));
-        pos[i3] += (S.pl.x + P.off[i * 2] - pos[i3]) * f;
-        pos[i3 + 1] += (S.pl.y + P.off[i * 2 + 1] - pos[i3 + 1]) * f;
-        pos[i3 + 2] += (0 - pos[i3 + 2]) * Math.min(1, dt * 8);
+        // Soft body: each particle springs (bouncily, at its own stiffness) to its spot in a
+        // swirling ball, and lags behind the motion so the ball stretches into a comet.
+        const ox = (P.off[i3] * ca - P.off[i3 + 1] * sa) * breathe;
+        const oy = (P.off[i3] * sa + P.off[i3 + 1] * ca) * breathe;
+        const lag = 0.02 + 0.1 * (1 - P.loose[i]);
+        const gx2 = S.pl.x + ox - S.pv.x * lag;
+        const gy2 = S.pl.y + oy - S.pv.y * lag;
+        const gz2 = P.off[i3 + 2];
+        const kg = 38 + 46 * P.loose[i];
+        const cg = 2 * Math.sqrt(kg) * 0.42;
+        vel[i3] += ((gx2 - pos[i3]) * kg - vel[i3] * cg) * dt;
+        vel[i3 + 1] += ((gy2 - pos[i3 + 1]) * kg - vel[i3 + 1] * cg) * dt;
+        vel[i3 + 2] += ((gz2 - pos[i3 + 2]) * kg - vel[i3 + 2] * cg) * dt;
+        pos[i3] += vel[i3] * dt;
+        pos[i3 + 1] += vel[i3 + 1] * dt;
+        pos[i3 + 2] += vel[i3 + 2] * dt;
         continue;
       }
       const sl = s * P.loose[i];
       const sh = still ? 0 : 0.003 * S.scale * (1 - s);
       const hx = P.home[i3] + Math.sin(t * 1.3 + P.phase[i]) * sh;
       const hy = P.home[i3 + 1] + Math.cos(t * 1.1 + P.phase[i]) * sh;
-      const tx = hx + ((P.scat[i3] - gx) / grow - hx) * sl;
-      const ty = hy + ((P.scat[i3 + 1] - gy) / grow - hy) * sl;
+      let tx = hx + ((P.scat[i3] - gx) / grow - hx) * sl;
+      let ty = hy + ((P.scat[i3 + 1] - gy) / grow - hy) * sl;
       const tz = P.home[i3 + 2] + (P.scat[i3 + 2] - PLANE_Z - P.home[i3 + 2]) * sl;
+      if (holding && P.pull[i] > 0) {
+        tx += dragX * P.pull[i];
+        ty += dragY * P.pull[i];
+      }
       let k = P.k[i];
       let c = 2 * Math.sqrt(k) * 0.72;
       if (P.free[i] > 0) {
@@ -701,6 +762,7 @@ function Field({ mobile, still, path }: { mobile: boolean; still: boolean; path:
       pos[i3 + 2] += vel[i3 + 2] * dt;
     }
     P.attr.needsUpdate = true;
+    P.hotAttr.needsUpdate = true;
 
     /* Tell the cursor the icon can be grabbed here. */
     const overUi = !!I.target?.closest(INTERACTIVE);
@@ -718,8 +780,15 @@ function Field({ mobile, still, path }: { mobile: boolean; still: boolean; path:
       const og = orbitRefs.current[i];
       if (!og) return;
       if (o.grabbed && S.plOk) {
-        o.pos.lerp(tmp.set(S.pl.x, S.pl.y, 0.6), Math.min(1, dt * 16));
-        o.vel.set(0, 0, 0);
+        // A bouncy spring to the cursor; it tumbles in the direction it's swung.
+        const kk = 70;
+        const cc = 2 * Math.sqrt(kk) * 0.4;
+        o.vel.x += ((S.pl.x - o.pos.x) * kk - o.vel.x * cc) * dt;
+        o.vel.y += ((S.pl.y - o.pos.y) * kk - o.vel.y * cc) * dt;
+        o.vel.z += ((1.2 - o.pos.z) * kk - o.vel.z * cc) * dt;
+        o.pos.addScaledVector(o.vel, dt);
+        o.spin.x += -o.vel.y * 3 * dt;
+        o.spin.y += o.vel.x * 3 * dt;
       } else {
         const a = S.orbit + (i / O.length) * Math.PI * 2;
         const hx = Math.cos(a) * R;

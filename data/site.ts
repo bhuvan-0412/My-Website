@@ -195,16 +195,16 @@ export const pmSeries: { day: number; lesson: string; url: string }[] = [
 ];
 
 /**
- * Reels for the video-editing section. Replace these with the ones you pick.
- * Optional `video`: put an .mp4 in /public/reels/ and set e.g. "/reels/day-22.mp4"
- * to play it right on the page (muted, on hover / when in view).
+ * Best edits for the "Cut by me" showcase, picked by likes (checked 24 Nov 2026).
+ * Each one plays on the page in Instagram's own player.
+ * Optional `video`: put an .mp4 in /public/reels/ and set e.g. "/reels/about-me.mp4"
+ * to play it right on the card instead (muted, when in view).
  */
-export const reels: { title: string; note: string; url: string; video?: string; badge?: string }[] = [
-  // Swap `url` for the about-me reel's link (or add `video: "/reels/about-me.mp4"`).
-  { title: "About me", note: "Who I am and why I learn in public", url: "https://www.instagram.com/its.bhuvan.builds/", badge: "Intro" },
-  { title: "Day 22", note: "Servers, cloud and product strategy", url: "https://www.instagram.com/its.bhuvan.builds/reel/Dfwn4hRsFrg/" },
-  { title: "Day 20", note: "Why a clear PRD matters", url: "https://www.instagram.com/its.bhuvan.builds/reel/Dfd2_UQTfB6/" },
-  { title: "Day 17", note: "Positioning a product", url: "https://www.instagram.com/its.bhuvan.builds/reel/DfPhxJeTEwK/" },
+export const reels: { title: string; note: string; url: string; likes: number; video?: string; badge?: string }[] = [
+  { title: "About me", note: "Stop waiting for the right moment", url: "https://www.instagram.com/reel/DcASSYVMnSe/", likes: 193, badge: "Intro" },
+  { title: "Day 20", note: "Why a clear PRD matters", url: "https://www.instagram.com/its.bhuvan.builds/reel/Dfd2_UQTfB6/", likes: 76 },
+  { title: "Day 11", note: "Analyse, strategise, grow", url: "https://www.instagram.com/its.bhuvan.builds/reel/DetERK7Mo9m/", likes: 70 },
+  { title: "Day 16", note: "Less chaos, more clarity", url: "https://www.instagram.com/its.bhuvan.builds/reel/DfCgwiSsSEn/", likes: 69 },
 ];
 
 /* ── Extra data for the bold design ─────────────────────── */
