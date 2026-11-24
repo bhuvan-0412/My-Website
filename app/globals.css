@@ -692,3 +692,13 @@ body { background: var(--ink); }
 .reels-sec .reel__note { color: #3d1b07; }
 .hdr__logo { white-space: nowrap; }
 @media (max-width: 600px) { .hdr__logo { font-size: 1rem; padding: 0 12px; } .hdr__menu { gap: 8px; } }
+
+/* Outlined type only works large; small headings use solid tangerine. */
+.tl .t-mint, .work__head .t-mint, .role .t-mint { color: var(--tangerine); -webkit-text-stroke: 0; }
+
+/* 404 */
+.lost { min-height: 100svh; display: flex; align-items: center; }
+.lost__code { font-size: clamp(7rem, min(26vw, 40svh), 22rem); color: transparent; -webkit-text-stroke: 0.02em var(--tangerine); line-height: 0.8; }
+.lost__title { margin-top: 18px; font-size: clamp(2.4rem, min(6vw, 10svh), 5rem); }
+.lost__text { margin-top: 16px; max-width: 46ch; color: var(--muted-dark); font-size: 1.1rem; }
+.lost__links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 28px; }
