@@ -273,7 +273,7 @@ function Field({ mobile, still, path }: { mobile: boolean; still: boolean; path:
     });
     const points = new THREE.Points(geo, mat);
     points.frustumCulled = false;
-    return { pos, vel, home, scat, k, loose, phase, geo, mat, points, attr, grabbed: new Uint8Array(N), off: new Float32Array(N * 2) };
+    return { pos, vel, home, scat, k, loose, phase, geo, mat, points, attr, grabbed: new Uint8Array(N), off: new Float32Array(N * 2), free: new Float32Array(N) };
   }, [N, mobile]);
 
   /* Orbiters */
@@ -288,6 +288,7 @@ function Field({ mobile, still, path }: { mobile: boolean; still: boolean; path:
         scat: new THREE.Vector3(),
         phase: i * 1.37,
         grabbed: false,
+        free: 0,
       })),
     [A]
   );
@@ -521,8 +522,8 @@ function Field({ mobile, still, path }: { mobile: boolean; still: boolean; path:
 
     /* Tilt with the cursor (an idle sway otherwise). */
     const tilt = !still && I.inside && !mobile;
-    const ry = tilt ? I.ndc.x * 0.42 : still ? 0 : Math.sin(t * 0.25) * 0.14;
-    const rx = tilt ? -I.ndc.y * 0.26 : still ? 0 : Math.cos(t * 0.21) * 0.06;
+    const ry = tilt ? I.ndc.x * 0.3 : still ? 0 : Math.sin(t * 0.25) * 0.14;
+    const rx = tilt ? -I.ndc.y * 0.18 : still ? 0 : Math.cos(t * 0.21) * 0.06;
     if (!S.grabbing) {
       S.rotY = THREE.MathUtils.damp(S.rotY, ry, 3, dt);
       S.rotX = THREE.MathUtils.damp(S.rotX, rx, 3, dt);
@@ -542,7 +543,7 @@ function Field({ mobile, still, path }: { mobile: boolean; still: boolean; path:
     S.plOk = I.inside && pointerLocal(S.pl);
     if (S.plOk) {
       tmp.copy(S.pl).sub(S.plPrev).divideScalar(Math.max(rawDt, 1 / 120));
-      if (tmp.lengthSq() < 40000) S.pv.lerp(tmp, 0.35);
+      if (tmp.lengthSq() < 90000) S.pv.lerp(tmp, 0.25);
     }
 
     /* Press: grab an artifact under the pointer, else the particles around it. */
@@ -567,19 +568,21 @@ function Field({ mobile, still, path }: { mobile: boolean; still: boolean; path:
           S.grabOrbiter = best;
           O[best].grabbed = true;
         } else {
-          const R2 = (S.scale * 0.22) ** 2;
+          // Judge by where particles belong (hovering pushes them away from the cursor),
+          // and take a generous chunk so it feels like grabbing part of the icon.
+          const R2 = (S.scale * 0.34) ** 2;
           let c = 0;
           for (let i = 0; i < N; i++) {
-            const dx = P.pos[i * 3] - S.pl.x;
-            const dyy = P.pos[i * 3 + 1] - S.pl.y;
+            const dx = P.home[i * 3] - S.pl.x;
+            const dyy = P.home[i * 3 + 1] - S.pl.y;
             if (dx * dx + dyy * dyy < R2) {
               P.grabbed[i] = 1;
-              P.off[i * 2] = dx;
-              P.off[i * 2 + 1] = dyy;
+              P.off[i * 2] = dx * 0.55;
+              P.off[i * 2 + 1] = dyy * 0.55;
               c++;
             }
           }
-          if (c > 30) S.grabbing = "particles";
+          if (c > 20 && S.s < 0.35) S.grabbing = "particles";
           else P.grabbed.fill(0);
         }
       }
@@ -591,15 +594,17 @@ function Field({ mobile, still, path }: { mobile: boolean; still: boolean; path:
       if (S.grabbing === "orbiter") {
         const o = O[S.grabOrbiter];
         o.grabbed = false;
-        o.vel.copy(S.pv).multiplyScalar(1.1);
-        o.spin.set(S.pv.y, S.pv.x, S.pv.length() * 0.3).multiplyScalar(0.4);
+        o.vel.copy(S.pv).multiplyScalar(1.5);
+        o.spin.set(S.pv.y, S.pv.x, S.pv.length() * 0.3).multiplyScalar(0.45);
+        o.free = 1.2;
       } else if (S.grabbing === "particles") {
         for (let i = 0; i < N; i++) {
           if (!P.grabbed[i]) continue;
-          const f = 0.8 + P.loose[i] * 0.5;
-          P.vel[i * 3] = S.pv.x * f;
-          P.vel[i * 3 + 1] = S.pv.y * f;
-          P.vel[i * 3 + 2] = (P.loose[i] - 0.75) * 6;
+          const f = 1.2 + P.loose[i] * 0.8;
+          P.vel[i * 3] = S.pv.x * f + (P.loose[i] - 0.78) * 4;
+          P.vel[i * 3 + 1] = S.pv.y * f + (P.phase[i] / Math.PI - 1) * 2;
+          P.vel[i * 3 + 2] = (P.loose[i] - 0.75) * 8;
+          P.free[i] = 0.9 + P.loose[i] * 0.6;
         }
         P.grabbed.fill(0);
       }
@@ -619,17 +624,20 @@ function Field({ mobile, still, path }: { mobile: boolean; still: boolean; path:
           const dyy = P.pos[i * 3 + 1] - by;
           const d2 = dx * dx + dyy * dyy;
           const d = Math.sqrt(d2) + 0.05;
-          const f = (10 + 26 * Math.exp(-d2 / sig2)) * (0.6 + P.loose[i] * 0.6);
+          const near = Math.exp(-d2 / sig2);
+          const f = (6 + 30 * near) * (0.6 + P.loose[i] * 0.6);
           P.vel[i * 3] += (dx / d) * f;
           P.vel[i * 3 + 1] += (dyy / d) * f;
-          P.vel[i * 3 + 2] += (P.loose[i] - 0.7) * 22;
+          P.vel[i * 3 + 2] += (P.loose[i] - 0.7) * 20 * near;
+          P.free[i] = Math.max(P.free[i], 0.25 + near * 0.9);
         }
         O.forEach((o) => {
           const dx = o.pos.x - bx;
           const dyy = o.pos.y - by;
           const d = Math.hypot(dx, dyy) + 0.1;
-          o.vel.x += (dx / d) * 14;
-          o.vel.y += (dyy / d) * 14;
+          o.vel.x += (dx / d) * 16;
+          o.vel.y += (dyy / d) * 16;
+          o.free = 0.8;
           o.spin.set((Math.random() - 0.5) * 12, (Math.random() - 0.5) * 12, (Math.random() - 0.5) * 6);
         });
       }
@@ -646,9 +654,10 @@ function Field({ mobile, still, path }: { mobile: boolean; still: boolean; path:
     for (let i = 0; i < N; i++) {
       const i3 = i * 3;
       if (P.grabbed[i]) {
-        const f = Math.min(1, dt * 18);
-        pos[i3] += (S.pl.x + P.off[i * 2] * 0.85 - pos[i3]) * f;
-        pos[i3 + 1] += (S.pl.y + P.off[i * 2 + 1] * 0.85 - pos[i3 + 1]) * f;
+        // Each held particle follows at its own pace, so the chunk trails like a comet.
+        const f = Math.min(1, dt * (8 + 16 * P.loose[i]));
+        pos[i3] += (S.pl.x + P.off[i * 2] - pos[i3]) * f;
+        pos[i3 + 1] += (S.pl.y + P.off[i * 2 + 1] - pos[i3 + 1]) * f;
         pos[i3 + 2] += (0 - pos[i3 + 2]) * Math.min(1, dt * 8);
         continue;
       }
@@ -659,8 +668,14 @@ function Field({ mobile, still, path }: { mobile: boolean; still: boolean; path:
       const tx = hx + ((P.scat[i3] - gx) / grow - hx) * sl;
       const ty = hy + ((P.scat[i3 + 1] - gy) / grow - hy) * sl;
       const tz = P.home[i3 + 2] + (P.scat[i3 + 2] - PLANE_Z - P.home[i3 + 2]) * sl;
-      const k = P.k[i];
-      const c = 2 * Math.sqrt(k) * 0.72;
+      let k = P.k[i];
+      let c = 2 * Math.sqrt(k) * 0.72;
+      if (P.free[i] > 0) {
+        P.free[i] -= dt;
+        const soft = Math.min(1, Math.max(0, P.free[i]) / 0.5);
+        k *= 1 - 0.93 * soft;
+        c = 2 * Math.sqrt(k) * 0.72 + 1.1 * soft;
+      }
       let ax = (tx - pos[i3]) * k - vel[i3] * c;
       let ay = (ty - pos[i3 + 1]) * k - vel[i3 + 1] * c;
       const az = (tz - pos[i3 + 2]) * k - vel[i3 + 2] * c;
@@ -668,10 +683,12 @@ function Field({ mobile, still, path }: { mobile: boolean; still: boolean; path:
         const dx = pos[i3] - S.pl.x;
         const dyy = pos[i3 + 1] - S.pl.y;
         const d2 = dx * dx + dyy * dyy;
+        const hdx = P.home[i3] - S.pl.x;
+        const hdy = P.home[i3 + 1] - S.pl.y;
+        if (hdx * hdx + hdy * hdy < hoverR2 * 2.5) near++;
         if (d2 < hoverR2) {
-          near++;
           const d = Math.sqrt(d2) + 0.02;
-          const f = (1 - d2 / hoverR2) * 120;
+          const f = (1 - d2 / hoverR2) * 70;
           ax += (dx / d) * f;
           ay += (dyy / d) * f;
         }
@@ -687,7 +704,7 @@ function Field({ mobile, still, path }: { mobile: boolean; still: boolean; path:
 
     /* Tell the cursor the icon can be grabbed here. */
     const overUi = !!I.target?.closest(INTERACTIVE);
-    const hint = mobile ? "" : S.grabbing ? "throw" : near > 14 && !overUi ? "drag" : "";
+    const hint = mobile ? "" : S.grabbing ? "throw" : near > 20 && s < 0.35 && !overUi ? "drag" : "";
     if (hint !== S.lastHint) {
       S.lastHint = hint;
       if (hint) document.documentElement.dataset.bghint = hint;
@@ -712,8 +729,9 @@ function Field({ mobile, still, path }: { mobile: boolean; still: boolean; path:
         const tx = hx + ((o.scat.x - gx) / grow - hx) * sl;
         const ty = hy + ((o.scat.y - gy) / grow - hy) * sl;
         const tz = hz + (o.scat.z - PLANE_Z - hz) * sl;
-        const k = 7;
-        const c = 2 * Math.sqrt(k) * 0.6;
+        o.free = Math.max(0, o.free - dt);
+        const k = 7 * (1 - 0.85 * Math.min(1, o.free / 0.5));
+        const c = 2 * Math.sqrt(k) * 0.6 + 0.8 * Math.min(1, o.free / 0.5);
         o.vel.x += ((tx - o.pos.x) * k - o.vel.x * c) * dt;
         o.vel.y += ((ty - o.pos.y) * k - o.vel.y * c) * dt;
         o.vel.z += ((tz - o.pos.z) * k - o.vel.z * c) * dt;
