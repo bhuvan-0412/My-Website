@@ -759,3 +759,9 @@ body { background: var(--ink); }
 @media (max-width: 900px) {
   .page-hero { justify-content: flex-end; }
 }
+
+/* ══ Section transitions ═══════════════════════════════════════ */
+/* Colour morph: the page colour behind everything, set from scroll by SectionFX. */
+.morph { position: fixed; inset: 0; z-index: 0; pointer-events: none; background: var(--ink); }
+/* The 3D layer is crisp now (no scroll blur). */
+.artifacts { filter: none !important; }

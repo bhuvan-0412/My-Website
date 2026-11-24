@@ -5,6 +5,7 @@ import SmoothScroll from "@/components/SmoothScroll";
 import Header from "@/components/bold/Header";
 import Footer from "@/components/bold/Footer";
 import ArtifactsLayer from "@/components/bold/ArtifactsLayer";
+import SectionFX from "@/components/bold/SectionFX";
 import Cursor from "@/components/bold/Cursor";
 import PageExit from "@/components/bold/PageExit";
 import NextPage from "@/components/bold/NextPage";
@@ -30,6 +31,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <SmoothScroll />
         <Header />
+        <SectionFX />
         <ArtifactsLayer />
         <main id="top">
           {children}

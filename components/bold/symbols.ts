@@ -118,12 +118,36 @@ export function samplePoints(name: string, n: number): P[] {
   return out;
 }
 
-/** The symbol as flat line-segment pairs [x0,y0, x1,y1, ...], in drawing order. */
-export function segmentPairs(name: string): number[] {
+/**
+ * Particle positions for a symbol: n points spread evenly (stratified) along the strokes,
+ * each pushed a little to either side so the strokes read as a bold, solid line.
+ * Returns [x0, y0, x1, y1, ...] in the -1..1 box, in stroke order, so particle k on one
+ * symbol flows to the same fraction of the next symbol when it morphs.
+ */
+export function strokeSamples(name: string, n: number, thick: number, rand: () => number): Float32Array {
   const strokes = SYMBOLS[name] ?? SYMBOLS.bulb;
-  const out: number[] = [];
+  const segs: { a: P; b: P; len: number }[] = [];
   strokes.forEach((s) => {
-    for (let i = 1; i < s.length; i++) out.push(s[i - 1][0], s[i - 1][1], s[i][0], s[i][1]);
+    for (let i = 1; i < s.length; i++) {
+      const a = s[i - 1];
+      const b = s[i];
+      segs.push({ a, b, len: Math.hypot(b[0] - a[0], b[1] - a[1]) || 0.0001 });
+    }
   });
+  const total = segs.reduce((t, s) => t + s.len, 0);
+  const out = new Float32Array(n * 2);
+  let si = 0;
+  let acc = 0;
+  for (let k = 0; k < n; k++) {
+    const d = ((k + rand()) / n) * total;
+    while (si < segs.length - 1 && d > acc + segs[si].len) acc += segs[si++].len;
+    const sg = segs[si];
+    const f = Math.min(1, Math.max(0, (d - acc) / sg.len));
+    const dx = (sg.b[0] - sg.a[0]) / sg.len;
+    const dy = (sg.b[1] - sg.a[1]) / sg.len;
+    const off = (rand() - 0.5) * 2 * thick;
+    out[k * 2] = sg.a[0] + (sg.b[0] - sg.a[0]) * f - dy * off;
+    out[k * 2 + 1] = sg.a[1] + (sg.b[1] - sg.a[1]) * f + dx * off;
+  }
   return out;
 }

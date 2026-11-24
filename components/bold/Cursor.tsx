@@ -30,6 +30,9 @@ export default function Cursor() {
     let target = 1;
     let raf = 0;
     let magnet: HTMLElement | null = null;
+    /** True while the pointer is over plain background (no link or labelled element). */
+    let plain = true;
+    let lastHint: string | undefined;
 
     const move = (e: PointerEvent) => {
       x = e.clientX;
@@ -37,8 +40,12 @@ export default function Cursor() {
       const el = e.target as HTMLElement | null;
       const labelled = el?.closest<HTMLElement>("[data-cursor]");
       const link = el?.closest("a, button, [role=button], input, label");
-      target = labelled ? 3.2 : link ? 1.9 : 1;
-      setLabel(labelled?.dataset.cursor ?? "");
+      // The background icon tells us when it can be grabbed (see Artifacts3D).
+      plain = !labelled && !link;
+      const hint = plain ? document.documentElement.dataset.bghint : undefined;
+      lastHint = hint;
+      target = labelled ? 3.2 : link ? 1.9 : hint ? 2.6 : 1;
+      setLabel(labelled?.dataset.cursor ?? (hint === "throw" ? "Throw" : hint ? "Drag" : ""));
 
       const m = el?.closest<HTMLElement>(MAGNETIC) ?? null;
       if (magnet && magnet !== m) magnet.style.translate = "";
@@ -59,6 +66,15 @@ export default function Cursor() {
     const up = () => (target /= 0.8);
 
     const loop = () => {
+      // The background icon's hint can change without the mouse moving (e.g. after a throw).
+      if (plain) {
+        const hint = document.documentElement.dataset.bghint;
+        if (hint !== lastHint) {
+          lastHint = hint;
+          target = hint ? 2.6 : 1;
+          setLabel(hint === "throw" ? "Throw" : hint ? "Drag" : "");
+        }
+      }
       rx += (x - rx) * 0.18;
       ry += (y - ry) * 0.18;
       scale += (target - scale) * 0.18;

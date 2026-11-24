@@ -233,7 +233,7 @@ export function Rise({ children, className, delay = 0, y = 40 }: { children: Rea
   );
 }
 
-/** Staggers its direct children into view. */
+/** Cascades its direct children into view: each one rises and tips forward out of a slight 3D tilt. */
 export function Stagger({ children, className, gap = 0.08 }: { children: ReactNode; className?: string; gap?: number }) {
   const reduce = useReducedMotion();
   return (
@@ -243,10 +243,11 @@ export function Stagger({ children, className, gap = 0.08 }: { children: ReactNo
           c
         ) : (
           <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.15 }}
-            transition={{ duration: 0.9, ease: easeOut, delay: i * gap }}
+            initial={{ opacity: 0, y: 70, rotateX: -32, scale: 0.94 }}
+            whileInView={{ opacity: 1, y: 0, rotateX: 0, scale: 1 }}
+            viewport={{ once: true, amount: 0.25, margin: "0px 0px -12% 0px" }}
+            transition={{ duration: 1, ease: easeOut, delay: 0.12 + i * gap }}
+            style={{ transformPerspective: 1100, transformOrigin: "50% 0%" }}
           >
             {c}
           </motion.div>
