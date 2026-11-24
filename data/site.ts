@@ -175,7 +175,7 @@ export const experience: {
 export const achievements: string[] = [
   "2nd place, Storming Aurora 12-hour hackathon, BITS Goa",
   "Dance Club, BITS Goa: 2nd place (2026) and 3rd place (2025), group dance",
-  "@its.bhuvan.builds: 25+ posts on PM and AI, 200+ followers",
+  "@its.bhuvan.builds: 27 posts on PM and AI, 42K+ views, 220+ followers",
 ];
 
 /**
@@ -248,7 +248,7 @@ export const stats: string[] = [
   "87.5% bot win rate",
   "Day 22 of 60 learning PM in public",
   "8 products built",
-  "200+ followers on @its.bhuvan.builds",
+  "42K+ reel views on @its.bhuvan.builds",
 ];
 
 /** The four kinds of work, for the home page. */
@@ -349,7 +349,7 @@ export const roles: {
     summary: "Learning product management in public, and editing every reel myself.",
     points: [
       "Running a 60-day series on product management: one lesson per reel, now at day 22.",
-      "25+ posts on learning PM and building AI products, followed by 200+ people.",
+      "27 posts on learning PM and building AI products: 42K+ views and 220+ followers so far.",
       "I edit every reel myself: the hook, the pacing, the cuts, the captions and the on-screen type.",
     ],
     built: [{ name: "Instagram", url: "https://www.instagram.com/its.bhuvan.builds/" }],
@@ -362,6 +362,6 @@ export const journey: { title: string; text: string }[] = [
   { title: "Learn in public", text: "I started sharing what I learn about product management, instead of learning it quietly." },
   { title: "60 days of PM", text: "One lesson per reel: PRDs, user research, prioritisation, competition, growth." },
   { title: "Edit it myself", text: "Every reel is cut by me: a hook in the first seconds, tight pacing, captions and on-screen type." },
-  { title: "25+ posts, 200+ followers", text: "A small audience that grows with every lesson." },
+  { title: "42K+ views", text: "27 posts and 220+ followers, growing with every lesson." },
   { title: "Day 22 of 60", text: "Still going. The log updates as the series does." },
 ];

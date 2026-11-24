@@ -32,6 +32,7 @@ export default function ReelFrame({
   views?: number;
 }) {
   const ref = useRef<HTMLVideoElement>(null);
+  const card = useRef<HTMLAnchorElement>(null);
   const [open, setOpen] = useState(false);
   const id = reelId(url);
 
@@ -59,12 +60,15 @@ export default function ReelFrame({
     return () => {
       lenis?.start();
       window.removeEventListener("keydown", key);
+      // Hand keyboard focus back to the card that opened the player.
+      card.current?.focus({ preventScroll: true });
     };
   }, [open]);
 
   return (
     <>
       <a
+        ref={card}
         className="reel"
         href={url}
         target="_blank"
@@ -149,7 +153,7 @@ export default function ReelFrame({
                   <a className="pill pill--ghost-light" href={url} target="_blank" rel="noreferrer">
                     Open on Instagram
                   </a>
-                  <button type="button" className="pill pill--tangerine" onClick={() => setOpen(false)}>
+                  <button type="button" className="pill pill--tangerine" onClick={() => setOpen(false)} autoFocus>
                     Close
                   </button>
                 </div>

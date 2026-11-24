@@ -17,7 +17,7 @@ export default function ContentPage() {
           <Rise delay={0.7} y={20}>
             <p className="page-hero__lede">
               A 60-day series on Instagram where I teach myself product management, one lesson per reel, and edit every
-              reel myself. 25+ posts so far, followed by 200+ people.
+              reel myself. 27 posts and 42K+ views so far, followed by 220+ people.
             </p>
           </Rise>
           <Rise delay={0.85} y={20} className="bigmeter">

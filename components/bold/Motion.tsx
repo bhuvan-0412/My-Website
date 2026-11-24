@@ -7,14 +7,12 @@ import {
   useAnimationFrame,
   useMotionValue,
   useInView,
-  useMotionValueEvent,
   useReducedMotion,
   useScroll,
   useSpring,
   useTransform,
   useVelocity,
 } from "framer-motion";
-import { scene } from "./formation";
 
 const ease = [0.76, 0, 0.24, 1] as const;
 const easeOut = [0.16, 1, 0.3, 1] as const;
@@ -257,17 +255,10 @@ export function Stagger({ children, className, gap = 0.08 }: { children: ReactNo
   );
 }
 
-/** While this block is on screen, the floating artifacts line up into a roadmap. */
+/** A section that takes a background symbol (kept as its own name for the home roadmap). */
 export function RoadmapZone({ children, className, shape }: { children: ReactNode; className?: string; shape?: string }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
-  useMotionValueEvent(scrollYProgress, "change", (p) => {
-    // Ramp in, hold, ramp out.
-    scene.formation = p < 0.25 ? p / 0.25 : p > 0.75 ? Math.max(0, (1 - p) / 0.25) : 1;
-  });
-  useEffect(() => () => void (scene.formation = 0), []);
   return (
-    <section ref={ref} className={className} data-shape={shape}>
+    <section className={className} data-shape={shape}>
       {children}
     </section>
   );

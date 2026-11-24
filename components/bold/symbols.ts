@@ -106,34 +106,6 @@ export const SYMBOLS: Record<string, Stroke[]> = {
   mail: [rect(-0.92, -0.6, 0.92, 0.6), [[-0.92, 0.6], [0, -0.08], [0.92, 0.6]]],
 };
 
-/** Spread n points evenly along a symbol's strokes. */
-export function samplePoints(name: string, n: number): P[] {
-  const strokes = SYMBOLS[name] ?? SYMBOLS.bulb;
-  const segs: { a: P; b: P; len: number }[] = [];
-  strokes.forEach((s) => {
-    for (let i = 1; i < s.length; i++) {
-      const a = s[i - 1];
-      const b = s[i];
-      segs.push({ a, b, len: Math.hypot(b[0] - a[0], b[1] - a[1]) || 0.02 });
-    }
-  });
-  const total = segs.reduce((t, s) => t + s.len, 0);
-  const out: P[] = [];
-  for (let k = 0; k < n; k++) {
-    let d = ((k + 0.5) / n) * total;
-    for (const s of segs) {
-      if (d <= s.len) {
-        const f = d / s.len;
-        out.push([s.a[0] + (s.b[0] - s.a[0]) * f, s.a[1] + (s.b[1] - s.a[1]) * f]);
-        break;
-      }
-      d -= s.len;
-    }
-    if (out.length < k + 1) out.push(segs[segs.length - 1].b);
-  }
-  return out;
-}
-
 /**
  * Particle positions for a symbol: n points spread evenly (stratified) along the strokes,
  * each pushed a little to either side so the strokes read as a bold, solid line.
