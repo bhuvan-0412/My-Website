@@ -3,6 +3,7 @@ import { pmSeries, reels, reelTotals } from "@/data/site";
 import { Counter, LineReveal, Rise, Stagger } from "@/components/bold/Motion";
 import ReelFrame from "@/components/ReelFrame";
 import Journey from "@/components/bold/Journey";
+import DayTrack from "@/components/bold/DayTrack";
 
 export const metadata: Metadata = { title: "Content" };
 
@@ -48,20 +49,12 @@ export default function ContentPage() {
       <section className="sec sec--ink" data-shape="bulb">
         <div className="wrap">
           <div className="sec__head">
-            <LineReveal as="h2" className="display sec__title" lines={[<span key="l">The <span className="t-tangerine">lessons.</span></span>]} onView />
+            <LineReveal as="h2" className="display sec__title" lines={[<span key="l">Every <span className="t-tangerine">day.</span></span>]} onView />
             <Rise className="sec__aside">
-              <p>Every day&apos;s lesson, in my own captions. Each one opens the reel.</p>
+              <p>One tile per day of the series, from day one to today. Hover for the lesson, click to watch the reel. Brighter tiles were watched more.</p>
             </Rise>
           </div>
-          <Stagger className="lessons" gap={0.04}>
-            {pmSeries.map((d) => (
-              <a key={d.day} href={d.url} target="_blank" rel="noreferrer" className="lesson">
-                <span className="lesson__day display">Day {d.day}</span>
-                <span className="lesson__text">{d.lesson}</span>
-                <span className="lesson__go">Watch</span>
-              </a>
-            ))}
-          </Stagger>
+          <DayTrack />
         </div>
       </section>
 

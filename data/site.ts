@@ -178,20 +178,33 @@ export const achievements: string[] = [
   "@its.bhuvan.builds: 25+ posts on PM and AI, 200+ followers",
 ];
 
-/** Lessons from the "60 days of PM" Instagram series, in Bhuvan's own captions. */
-export const pmSeries: { day: number; lesson: string; url: string }[] = [
-  { day: 22, lesson: "Behind every cool app is a whole lot of servers, cloud magic and product strategy.", url: "https://www.instagram.com/its.bhuvan.builds/reel/Dfwn4hRsFrg/" },
-  { day: 21, lesson: "Not a developer, still gotta know what's happening under the hood.", url: "https://www.instagram.com/its.bhuvan.builds/reel/Dfjqsn5zdv3/" },
-  { day: 20, lesson: "A clear PRD today saves a thousand questions tomorrow.", url: "https://www.instagram.com/its.bhuvan.builds/reel/Dfd2_UQTfB6/" },
-  { day: 19, lesson: "Stop pitching features. Start finding problems.", url: "https://www.instagram.com/its.bhuvan.builds/reel/DfXazHpzIlv/" },
-  { day: 18, lesson: "Compliments don't validate an idea, behaviour does.", url: "https://www.instagram.com/its.bhuvan.builds/reel/DfSf-gdzWtc/" },
-  { day: 17, lesson: "Explain who a product is for, what problem it solves and why it beats the alternatives.", url: "https://www.instagram.com/its.bhuvan.builds/reel/DfPhxJeTEwK/" },
-  { day: 16, lesson: "Less chaos, more clarity: visualise tasks, prioritise better, keep the team in sync.", url: "https://www.instagram.com/its.bhuvan.builds/reel/DfCgwiSsSEn/" },
-  { day: 15, lesson: "Plan it all or figure it out as you go? Both have a strategy.", url: "https://www.instagram.com/its.bhuvan.builds/reel/De9HQYQsegJ/" },
-  { day: 14, lesson: "The right priorities turn effort into impact.", url: "https://www.instagram.com/its.bhuvan.builds/reel/De3-cbRzZIP/" },
-  { day: 13, lesson: "Understanding the how, what and where of business growth.", url: "https://www.instagram.com/its.bhuvan.builds/reel/Dey3JVTspRK/" },
-  { day: 12, lesson: "Know your competition, read the room, make smarter business moves.", url: "https://www.instagram.com/its.bhuvan.builds/reel/DewU5jesFEJ/" },
-  { day: 11, lesson: "Analyse. Strategise. Grow.", url: "https://www.instagram.com/its.bhuvan.builds/reel/DetERK7Mo9m/" },
+/**
+ * Every day of the "60 days of PM" Instagram series so far, in Bhuvan's own captions,
+ * with views (checked 24 Nov 2026). Add a line here each time a new day goes up.
+ */
+export const pmSeries: { day: number; lesson: string; url: string; views: number }[] = [
+  { day: 1, lesson: "Turns out PM isn't just \"managing a product\".", url: "https://www.instagram.com/reel/DcSLYzxsUqD/", views: 1654 },
+  { day: 2, lesson: "What if the best ideas come from simply asking \"why?\"", url: "https://www.instagram.com/reel/DcWoHgXM-GI/", views: 1573 },
+  { day: 3, lesson: "The right solution starts with finding the right problem.", url: "https://www.instagram.com/reel/DcYyiH-sX8_/", views: 2294 },
+  { day: 4, lesson: "Your product changes, so your strategy should too.", url: "https://www.instagram.com/reel/DceXuN-MNTO/", views: 1032 },
+  { day: 5, lesson: "Build for people, not \"users\".", url: "https://www.instagram.com/reel/DcjIv7QM78F/", views: 1647 },
+  { day: 6, lesson: "Structure first, aesthetics later.", url: "https://www.instagram.com/reel/DcltVvUs34L/", views: 2217 },
+  { day: 7, lesson: "A million downloads doesn't mean success.", url: "https://www.instagram.com/reel/DdM8sFysozU/", views: 1874 },
+  { day: 8, lesson: "More data. More noise. Less clarity.", url: "https://www.instagram.com/reel/DdQKHfSMO3f/", views: 1297 },
+  { day: 9, lesson: "Great products start with small experiments.", url: "https://www.instagram.com/reel/DeoMu41s2y7/", views: 1821 },
+  { day: 10, lesson: "Build what people want and actually need.", url: "https://www.instagram.com/reel/DeqcPq9M4hT/", views: 445 },
+  { day: 11, lesson: "Analyse. Strategise. Grow.", url: "https://www.instagram.com/its.bhuvan.builds/reel/DetERK7Mo9m/", views: 1105 },
+  { day: 12, lesson: "Know your competition, read the room, make smarter business moves.", url: "https://www.instagram.com/its.bhuvan.builds/reel/DewU5jesFEJ/", views: 833 },
+  { day: 13, lesson: "Understanding the how, what and where of business growth.", url: "https://www.instagram.com/its.bhuvan.builds/reel/Dey3JVTspRK/", views: 1450 },
+  { day: 14, lesson: "The right priorities turn effort into impact.", url: "https://www.instagram.com/its.bhuvan.builds/reel/De3-cbRzZIP/", views: 932 },
+  { day: 15, lesson: "Plan it all or figure it out as you go? Both have a strategy.", url: "https://www.instagram.com/its.bhuvan.builds/reel/De9HQYQsegJ/", views: 943 },
+  { day: 16, lesson: "Less chaos, more clarity: visualise tasks, prioritise better, keep the team in sync.", url: "https://www.instagram.com/its.bhuvan.builds/reel/DfCgwiSsSEn/", views: 1330 },
+  { day: 17, lesson: "Explain who a product is for, what problem it solves and why it beats the alternatives.", url: "https://www.instagram.com/its.bhuvan.builds/reel/DfPhxJeTEwK/", views: 979 },
+  { day: 18, lesson: "Compliments don't validate an idea, behaviour does.", url: "https://www.instagram.com/its.bhuvan.builds/reel/DfSf-gdzWtc/", views: 770 },
+  { day: 19, lesson: "Stop pitching features. Start finding problems.", url: "https://www.instagram.com/its.bhuvan.builds/reel/DfXazHpzIlv/", views: 1542 },
+  { day: 20, lesson: "A clear PRD today saves a thousand questions tomorrow.", url: "https://www.instagram.com/its.bhuvan.builds/reel/Dfd2_UQTfB6/", views: 2197 },
+  { day: 21, lesson: "Not a developer, still gotta know what's happening under the hood.", url: "https://www.instagram.com/its.bhuvan.builds/reel/Dfjqsn5zdv3/", views: 2084 },
+  { day: 22, lesson: "Behind every cool app is a whole lot of servers, cloud magic and product strategy.", url: "https://www.instagram.com/its.bhuvan.builds/reel/Dfwn4hRsFrg/", views: 522 },
 ];
 
 /**
