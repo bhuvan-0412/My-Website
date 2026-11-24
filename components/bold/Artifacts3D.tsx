@@ -5,7 +5,11 @@ import { Environment, Lightformer, RoundedBox } from "@react-three/drei";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
-import { samplePoints } from "./symbols";
+import { LineSegments2 } from "three/examples/jsm/lines/LineSegments2.js";
+import { LineSegmentsGeometry } from "three/examples/jsm/lines/LineSegmentsGeometry.js";
+import { LineMaterial } from "three/examples/jsm/lines/LineMaterial.js";
+import { samplePoints, segmentPairs } from "./symbols";
+import { scene } from "./formation";
 
 /* Palette: ink + tangerine, with off-white and soft tints of the two */
 const INK = "#0d1321";
@@ -26,6 +30,8 @@ type Item = {
   phase: number;
   spin: number;
 };
+
+export type ShapeState = { name: string; tone: "ink" | "paper" | "tangerine" };
 
 function rng(seed: number) {
   return () => {
@@ -148,17 +154,21 @@ const COLORS: Record<Kind, string[]> = {
   toggle: [TAN, GREY],
   code: ["code"],
 };
-const BASE: Record<Kind, number> = { sticky: 0.55, cursor: 0.62, phone: 0.48, toggle: 0.5, code: 0.42 };
+/** Smaller than before: more of them, packed along the outline, reads as a clear icon. */
+const BASE: Record<Kind, number> = { sticky: 0.4, cursor: 0.44, phone: 0.35, toggle: 0.36, code: 0.31 };
 
 /** 0 at the top of the page, 1 once you've scrolled most of the first screen. */
 const scrollMix = () => (typeof window === "undefined" ? 0 : Math.min(1, Math.max(0, window.scrollY / (window.innerHeight * 0.85))));
 
-function Field({ count, mobile, still, shape }: { count: number; mobile: boolean; still: boolean; shape: React.MutableRefObject<string> }) {
+/** The plane the symbol is drawn on (artifacts sit just in front of and behind it). */
+const PLANE_Z = -5.5;
+
+function Field({ count, mobile, still, shape }: { count: number; mobile: boolean; still: boolean; shape: React.MutableRefObject<ShapeState> }) {
   const { camera, size } = useThree();
   const groups = useRef<(THREE.Group | null)[]>([]);
   const pointer = useRef(new THREE.Vector2(99, 99));
   const ray = useMemo(() => new THREE.Raycaster(), []);
-  const plane = useMemo(() => new THREE.Plane(new THREE.Vector3(0, 0, 1), 5.5), []);
+  const plane = useMemo(() => new THREE.Plane(new THREE.Vector3(0, 0, 1), -PLANE_Z), []);
   const hit = useMemo(() => new THREE.Vector3(), []);
 
   const tex = useMemo(() => {
@@ -176,10 +186,10 @@ function Field({ count, mobile, still, shape }: { count: number; mobile: boolean
         kind,
         color: pal[Math.floor(r() * pal.length)],
         base: BASE[kind],
-        size: (mobile ? 0.8 : 1) * (0.9 + r() * 0.35),
-        depth: -7 + r() * 3.5,
+        size: (mobile ? 0.85 : 1) * (0.9 + r() * 0.25),
+        depth: PLANE_Z - 0.6 + r() * 1.2,
         phase: r() * 10,
-        spin: (r() - 0.5) * 0.9,
+        spin: (r() - 0.5) * 1.4,
       };
     });
   }, [count, mobile]);
@@ -201,9 +211,27 @@ function Field({ count, mobile, still, shape }: { count: number; mobile: boolean
   );
   /** Symbol layout relative to its centre. */
   const local = useRef<THREE.Vector3[]>([]);
+  /** Where each artifact goes when the symbol breaks apart: an even spread over the whole screen. */
+  const spread = useRef<THREE.Vector3[]>([]);
   const lastKey = useRef("");
   const mix = useRef(scrollMix());
   const view = useRef({ w: 1, h: 1 });
+
+  /* Scroll drives the break-apart: moving = scattered, resting = a clear symbol. */
+  const lastY = useRef(typeof window === "undefined" ? 0 : window.scrollY);
+  const movedAt = useRef(-10);
+  const scatter = useRef(0);
+
+  /* The outline that draws itself through the artifacts. */
+  const line = useMemo(() => {
+    const mat = new LineMaterial({ color: TAN, linewidth: mobile ? 2.4 : 3.4, transparent: true, opacity: 0, depthWrite: false, depthTest: false });
+    const l = new LineSegments2(new LineSegmentsGeometry(), mat);
+    l.renderOrder = 10;
+    l.frustumCulled = false;
+    return l;
+  }, [mobile]);
+  const segCount = useRef(0);
+  const draw = useRef(0);
 
   useEffect(() => {
     const move = (e: PointerEvent) => pointer.current.set((e.clientX / window.innerWidth) * 2 - 1, -(e.clientY / window.innerHeight) * 2 + 1);
@@ -216,33 +244,101 @@ function Field({ count, mobile, still, shape }: { count: number; mobile: boolean
     };
   }, []);
 
+  useEffect(
+    () => () => {
+      line.geometry.dispose();
+      (line.material as LineMaterial).dispose();
+    },
+    [line]
+  );
+
   useFrame((state, dt) => {
     const t = state.clock.elapsedTime;
     const cam = camera as THREE.PerspectiveCamera;
 
-    const key = `${shape.current}-${size.width}x${size.height}`;
+    // Page transitions and scrolling both break the symbol apart.
+    const y = window.scrollY;
+    if (Math.abs(y - lastY.current) > 0.6) movedAt.current = t;
+    lastY.current = y;
+    if (scene.burst > 0) {
+      movedAt.current = t;
+      scene.burst = 0;
+    }
+
+    const key = `${shape.current.name}-${size.width}x${size.height}`;
     if (key !== lastKey.current) {
+      // A new symbol: scatter briefly, then gather into it.
+      if (lastKey.current) movedAt.current = Math.max(movedAt.current, t - 0.05);
       lastKey.current = key;
-      const dist = cam.position.z + 5.5;
+      const dist = cam.position.z - PLANE_Z;
       const visH = 2 * dist * Math.tan(THREE.MathUtils.degToRad(cam.fov / 2));
       const visW = visH * (size.width / size.height);
+      const scale = mobile ? Math.min(visW * 0.34, visH * 0.2) : visH * 0.33;
       view.current = { w: visW, h: visH };
-      const scale = mobile ? Math.min(visW * 0.36, visH * 0.22) : visH * 0.34;
-      const pts = samplePoints(shape.current, items.length);
+
+      const pts = samplePoints(shape.current.name, items.length);
       const byItem: THREE.Vector3[] = new Array(items.length);
       order.forEach((itemIndex, k) => {
         const [x, y] = pts[k];
         byItem[itemIndex] = new THREE.Vector3(x * scale, y * scale, items[itemIndex].depth);
       });
       local.current = byItem;
+
+      // Even spread: a jittered grid over the whole screen.
+      const cols = Math.max(3, Math.round(Math.sqrt((items.length * visW) / visH)));
+      const rows = Math.ceil(items.length / cols);
+      const r = rng(23);
+      const cells = Array.from({ length: cols * rows }, (_, c) => c);
+      for (let i = cells.length - 1; i > 0; i--) {
+        const j = Math.floor(r() * (i + 1));
+        [cells[i], cells[j]] = [cells[j], cells[i]];
+      }
+      spread.current = items.map((_, i) => {
+        const c = cells[i];
+        const gx = ((c % cols) + 0.5 + (r() - 0.5) * 0.6) / cols;
+        const gy = (Math.floor(c / cols) + 0.5 + (r() - 0.5) * 0.6) / rows;
+        return new THREE.Vector3((gx - 0.5) * visW * 0.98, (gy - 0.5) * visH * 0.94, PLANE_Z - 1.6 + r() * 3.2);
+      });
+
+      // The outline, in the same units as the symbol.
+      const pairs = segmentPairs(shape.current.name);
+      const pos = new Float32Array((pairs.length / 2) * 3);
+      for (let i = 0, j = 0; i < pairs.length; i += 2, j += 3) {
+        pos[j] = pairs[i] * scale;
+        pos[j + 1] = pairs[i + 1] * scale;
+        pos[j + 2] = 0;
+      }
+      line.geometry.dispose();
+      line.geometry = new LineSegmentsGeometry().setPositions(pos);
+      segCount.current = pairs.length / 4;
+      draw.current = 0;
     }
 
     // At the top of the page the symbol sits on the right; scrolling eases it to the centre.
     mix.current = THREE.MathUtils.damp(mix.current, scrollMix(), 4, dt);
     const m = mix.current * mix.current * (3 - 2 * mix.current);
     const { w: visW, h: visH } = view.current;
-    const cx = mobile ? 0 : visW * 0.24 * (1 - m);
-    const cy = mobile ? visH * 0.12 * (1 - m) : -visH * 0.02;
+    const cx = mobile ? 0 : visW * 0.26 * (1 - m);
+    const cy = mobile ? visH * 0.2 * (1 - m) : -visH * 0.02;
+    // Centred behind the content, the symbol grows so it reads around the cards.
+    const grow = mobile ? 1 : 1 + 0.22 * m;
+
+    // Break apart fast while scrolling; gather back a beat after it stops.
+    const moving = !still && t - movedAt.current < 0.22;
+    scatter.current = THREE.MathUtils.damp(scatter.current, moving ? 1 : 0, moving ? 5 : 2.2, dt);
+    const s = scatter.current * scatter.current * (3 - 2 * scatter.current);
+
+    // The outline hides while scattered, then traces itself in once the artifacts are nearly home.
+    if (s > 0.35) draw.current = 0;
+    else if (s < 0.12) draw.current = Math.min(1, draw.current + dt * (still ? 99 : 0.9));
+    const traced = 1 - Math.pow(1 - draw.current, 3);
+    line.geometry.instanceCount = Math.ceil(segCount.current * traced);
+    const mat = line.material as LineMaterial;
+    mat.opacity = 0.85 * (1 - s) * Math.min(1, draw.current * 4);
+    mat.color.set(shape.current.tone === "tangerine" ? INK : TAN);
+    mat.resolution.set(size.width, size.height);
+    line.position.set(cx, cy, PLANE_Z);
+    line.scale.setScalar(grow);
 
     let pointerOn = false;
     if (!mobile && Math.abs(pointer.current.x) <= 1) {
@@ -253,17 +349,22 @@ function Field({ count, mobile, still, shape }: { count: number; mobile: boolean
     items.forEach((item, i) => {
       const g = groups.current[i];
       const lp = local.current[i];
-      if (!g || !lp) return;
-      const tx = cx + lp.x;
-      const ty = cy + lp.y;
+      const sp = spread.current[i];
+      if (!g || !lp || !sp) return;
+      // Scattered positions drift slowly so the spread feels alive.
+      const sx = sp.x + Math.sin(t * 0.3 + item.phase) * 0.4;
+      const sy = sp.y + Math.cos(t * 0.27 + item.phase) * 0.4;
+      const tx = THREE.MathUtils.lerp(cx + lp.x * grow, sx, s);
+      const ty = THREE.MathUtils.lerp(cy + lp.y * grow, sy, s);
+      const tz = THREE.MathUtils.lerp(lp.z, sp.z, s);
       const L = live[i];
-      // The cursor pushes artifacts away; they drift back into the symbol.
+      // The cursor pushes artifacts away; they drift back into place.
       if (pointerOn) {
         const dx = L.pos.x - hit.x;
         const dy = L.pos.y - hit.y;
         const d2 = dx * dx + dy * dy;
-        if (d2 < 7) {
-          const f = (7 - d2) * 1.6;
+        if (d2 < 5) {
+          const f = (5 - d2) * 1.8;
           const d = Math.sqrt(d2 + 0.01);
           L.vel.x += (dx / d) * f * dt;
           L.vel.y += (dy / d) * f * dt;
@@ -271,17 +372,17 @@ function Field({ count, mobile, still, shape }: { count: number; mobile: boolean
       }
       L.vel.multiplyScalar(Math.exp(-dt * 2.6));
       // Each artifact moves at its own pace, so a symbol assembles in a ripple.
-      const k = 1 - Math.exp(-dt * (1.5 + (i % 7) * 0.18));
-      const bob = still ? 0 : Math.sin(t * 0.8 + item.phase) * 0.08;
+      const k = 1 - Math.exp(-dt * (2.2 + (i % 9) * 0.22));
+      const bob = still ? 0 : Math.sin(t * 0.8 + item.phase) * 0.05 * (1 - s);
       L.pos.x += (tx - L.pos.x) * k + L.vel.x * dt;
       L.pos.y += (ty + bob - L.pos.y) * k + L.vel.y * dt;
-      L.pos.z += (lp.z - L.pos.z) * k;
+      L.pos.z += (tz - L.pos.z) * k;
       g.position.copy(L.pos);
-      const travel = Math.min(1, Math.hypot(tx - L.pos.x, ty - L.pos.y) / 4);
+      const travel = Math.min(1, Math.hypot(tx - L.pos.x, ty - L.pos.y) / 4) + s * 0.6;
       if (!still) {
-        L.rot.x = Math.sin(t * 0.6 + item.phase) * 0.22 + travel * 1.2 * item.spin;
-        L.rot.y = Math.cos(t * 0.5 + item.phase) * 0.3 + travel * 1.6 * item.spin;
-        L.rot.z = Math.sin(t * 0.4 + item.phase) * 0.15 + travel * item.spin;
+        L.rot.x = Math.sin(t * 0.6 + item.phase) * 0.18 + travel * 1.2 * item.spin;
+        L.rot.y = Math.cos(t * 0.5 + item.phase) * 0.25 + travel * 1.6 * item.spin;
+        L.rot.z = Math.sin(t * 0.4 + item.phase) * 0.12 + travel * item.spin;
       }
       g.rotation.copy(L.rot);
       g.scale.setScalar(item.base * item.size);
@@ -290,6 +391,7 @@ function Field({ count, mobile, still, shape }: { count: number; mobile: boolean
 
   return (
     <>
+      <primitive object={line} />
       {items.map((it, i) => (
         <group key={i} ref={(g) => { groups.current[i] = g; }}>
           <Artifact item={it} tex={tex} />
@@ -303,7 +405,7 @@ export default function Artifacts3D() {
   const [ready, setReady] = useState(false);
   const [mobile, setMobile] = useState(false);
   const [still, setStill] = useState(false);
-  const shape = useRef("bulb");
+  const shape = useRef<ShapeState>({ name: "bulb", tone: "ink" });
   const layer = useRef<HTMLDivElement>(null);
   const path = usePathname();
 
@@ -313,13 +415,13 @@ export default function Artifacts3D() {
     setReady(true);
   }, []);
 
-  // Sharp at the top of the page; it softens (blur, a little fade) as you scroll into the content.
+  // Sharp at the top of the page; it softens slightly as you scroll into the content.
   useEffect(() => {
     const onScroll = () => {
       const m = scrollMix();
       if (layer.current) {
-        layer.current.style.filter = m > 0.01 ? `blur(${(m * 2.2).toFixed(2)}px)` : "none";
-        layer.current.style.opacity = String(1 - m * 0.2);
+        layer.current.style.filter = m > 0.01 ? `blur(${(m * 0.8).toFixed(2)}px)` : "none";
+        layer.current.style.opacity = String(1 - m * 0.1);
       }
     };
     onScroll();
@@ -327,17 +429,20 @@ export default function Artifacts3D() {
     return () => window.removeEventListener("scroll", onScroll);
   }, [ready, path]);
 
-  // Watch which section is in the middle of the screen and take its symbol.
+  // Watch which section is in the middle of the screen and take its symbol (and its colour).
   useEffect(() => {
     let io: IntersectionObserver | null = null;
+    const read = (el: HTMLElement): ShapeState => ({
+      name: el.dataset.shape || "bulb",
+      tone: el.classList.contains("sec--tangerine") ? "tangerine" : el.classList.contains("sec--paper") ? "paper" : "ink",
+    });
     const start = window.setTimeout(() => {
       const els = Array.from(document.querySelectorAll<HTMLElement>("[data-shape]"));
-      if (els[0]?.dataset.shape) shape.current = els[0].dataset.shape;
+      if (els[0]) shape.current = read(els[0]);
       io = new IntersectionObserver(
         (entries) => {
           entries.forEach((e) => {
-            const s = (e.target as HTMLElement).dataset.shape;
-            if (e.isIntersecting && s) shape.current = s;
+            if (e.isIntersecting) shape.current = read(e.target as HTMLElement);
           });
         },
         { rootMargin: "-45% 0px -45% 0px" }
@@ -365,7 +470,7 @@ export default function Artifacts3D() {
           <Lightformer intensity={1.2} color={TAN} position={[8, -2, 4]} rotation-y={-Math.PI / 2} scale={[10, 4, 1]} />
           <Lightformer intensity={0.8} color={PAPER} position={[-8, 0, 4]} rotation-y={Math.PI / 2} scale={[10, 4, 1]} />
         </Environment>
-        <Field count={mobile ? 24 : 38} mobile={mobile} still={still} shape={shape} />
+        <Field count={mobile ? 40 : 66} mobile={mobile} still={still} shape={shape} />
       </Canvas>
     </div>
   );

@@ -702,3 +702,60 @@ body { background: var(--ink); }
 .lost__title { margin-top: 18px; font-size: clamp(2.4rem, min(6vw, 10svh), 5rem); }
 .lost__text { margin-top: 16px; max-width: 46ch; color: var(--muted-dark); font-size: 1.1rem; }
 .lost__links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 28px; }
+
+
+/* ══ Fit pass: inner pages ═══════════════════════════════════ */
+/* Every page hero is a full first screen, so the next slide never peeks in halfway. */
+.page-hero { min-height: 100vh; min-height: 100svh; display: flex; flex-direction: column; justify-content: center; padding: 96px 0 clamp(40px, 8svh, 80px); }
+/* Smaller than before so the title stays left of the artifact symbol. */
+.page-hero__title { font-size: clamp(3.2rem, min(8.4vw, 16svh), 9.5rem); }
+
+/* Slides clear the fixed header before their content starts. */
+@media (min-width: 901px) {
+  .sec:not(.work-sec) { padding-top: max(88px, 12svh); padding-bottom: clamp(32px, 6svh, 72px); }
+}
+
+/* Journey: big enough to own its slide. */
+.journey { gap: clamp(16px, 2.2vw, 32px); }
+.journey::before { top: 26px; left: 26px; right: 26px; }
+.journey__dot { width: 52px; height: 52px; font-size: 1.05rem; }
+.journey__step { gap: 12px; }
+.journey__step h3 { margin-top: 14px; font-size: clamp(1.6rem, min(2.7vw, 5.8svh), 2.9rem); }
+.journey__step p { font-size: clamp(0.95rem, min(1.15vw, 2.5svh), 1.12rem); line-height: 1.5; }
+
+/* Lessons: a little tighter so two rows sit comfortably under the title. */
+.lesson { min-height: clamp(120px, 19svh, 190px); padding: 16px 16px 14px; }
+.lesson__day { font-size: clamp(1.5rem, min(2.2vw, 4.4svh), 2rem); }
+.lesson__text { font-size: clamp(0.84rem, min(1vw, 2.2svh), 0.95rem); }
+.lesson__go { margin-top: 10px; }
+
+/* Cut by me: intro on the left, four reels on the right. */
+.reels-layout { display: grid; grid-template-columns: minmax(260px, 1fr) auto; gap: clamp(28px, 4vw, 64px); align-items: center; }
+.reels-intro { display: grid; gap: clamp(18px, 3svh, 32px); }
+.reels-layout .reels {
+  --reel-w: min(calc((100vw - 2 * var(--gutter) - 380px - 3 * 20px) / 4), calc((100svh - 250px) * 0.5625), 260px);
+  grid-template-columns: repeat(4, var(--reel-w)); gap: 20px; max-width: none;
+}
+.reels-layout .reel__day { white-space: normal; font-size: clamp(1.9rem, calc(var(--reel-w) * 0.2), 3.2rem); }
+.reels-layout .reel:first-child .reel__screen { border-color: var(--ink); box-shadow: 0 30px 60px -30px rgba(13, 19, 33, 0.6); }
+@media (max-width: 900px) {
+  .reels-layout { grid-template-columns: 1fr; }
+  .reels-layout .reels { --reel-w: 46%; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 600px) {
+  .reels-layout .reels { grid-template-columns: repeat(4, 72%); overflow-x: auto; scroll-snap-type: x mandatory; }
+}
+
+/* Lighter frosting so the background symbol stays readable as a shape. */
+@media (min-width: 901px) {
+  .sec--ink { backdrop-filter: blur(2.5px) saturate(1.2); -webkit-backdrop-filter: blur(2.5px) saturate(1.2); }
+  .sec--paper, .sec--tangerine { backdrop-filter: blur(2.5px); -webkit-backdrop-filter: blur(2.5px); }
+}
+.about-copy p { font-size: clamp(1rem, min(1.25vw, 2.7svh), 1.2rem); }
+/* The longer headline stays left of the symbol on the right. */
+.hero__title { font-size: clamp(3rem, min(7.6vw, 13.5svh), 9.5rem); }
+/* Heroes stay see-through on phones too, so the symbol shows above the headline. */
+.hero.sec--ink, .page-hero.sec--ink { background: transparent; }
+@media (max-width: 900px) {
+  .page-hero { justify-content: flex-end; }
+}

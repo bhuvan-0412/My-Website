@@ -20,7 +20,7 @@ export default function AboutPage() {
         <div className="wrap">
           <ScrollWords
             className="display statement__text"
-            text="I care as much about why a product should exist as about how it works, so I build it myself and then go and check."
+            text="I care as much about why a product should exist as about how it works, so I check that first and then build it myself."
             accent={["why", "how", "check"]}
           />
         </div>

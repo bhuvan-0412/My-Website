@@ -36,11 +36,11 @@ export default function Home() {
               delay={0.35}
               lines={[
                 <span key="a">
-                  I build <span className="t-mint">the AI.</span>
+                  Find <span className="t-mint">the problem.</span>
                 </span>,
-                "Then I ask if",
+                "Build the solution.",
                 <span key="x" className="t-tangerine">
-                  it should exist.
+                  Ship it.
                 </span>,
               ]}
             />
@@ -75,15 +75,15 @@ export default function Home() {
           <Chroma>
             <ScrollWords
               className="display statement__text"
-              text="I write the agents, ship the web app, and then go and find out whether anyone actually needed it."
-              accent={["agents", "needed"]}
+              text="I find out what people actually need, decide what’s worth building, and then ship it."
+              accent={["need", "ship"]}
             />
           </Chroma>
         </div>
       </CircleSection>
 
       {/* ── How I work: the artifacts line up into a roadmap ─ */}
-      <RoadmapZone className="sec sec--ink roadmap" shape="roadmap">
+      <RoadmapZone className="sec sec--ink roadmap" shape="rocket">
         <div className="wrap">
           <div className="sec__head">
             <LineReveal as="h2" className="display sec__title" lines={["Idea to", <span key="s" className="t-tangerine">shipped.</span>]} onView />
@@ -104,7 +104,7 @@ export default function Home() {
       </RoadmapZone>
 
       {/* ── Numbers ──────────────────────────── */}
-      <section className="sec sec--paper numbers" data-shape="arrow">
+      <section className="sec sec--paper numbers" data-shape="bars">
         <div className="wrap">
           <div className="sec__head">
             <LineReveal as="h2" className="display sec__title" lines={["One builder,", "many hats."]} onView />

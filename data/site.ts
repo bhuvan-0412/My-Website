@@ -199,7 +199,9 @@ export const pmSeries: { day: number; lesson: string; url: string }[] = [
  * Optional `video`: put an .mp4 in /public/reels/ and set e.g. "/reels/day-22.mp4"
  * to play it right on the page (muted, on hover / when in view).
  */
-export const reels: { title: string; note: string; url: string; video?: string }[] = [
+export const reels: { title: string; note: string; url: string; video?: string; badge?: string }[] = [
+  // Swap `url` for the about-me reel's link (or add `video: "/reels/about-me.mp4"`).
+  { title: "About me", note: "Who I am and why I learn in public", url: "https://www.instagram.com/its.bhuvan.builds/", badge: "Intro" },
   { title: "Day 22", note: "Servers, cloud and product strategy", url: "https://www.instagram.com/its.bhuvan.builds/reel/Dfwn4hRsFrg/" },
   { title: "Day 20", note: "Why a clear PRD matters", url: "https://www.instagram.com/its.bhuvan.builds/reel/Dfd2_UQTfB6/" },
   { title: "Day 17", note: "Positioning a product", url: "https://www.instagram.com/its.bhuvan.builds/reel/DfPhxJeTEwK/" },
@@ -265,7 +267,7 @@ export const faqs: { q: string; a: string }[] = [
   },
   {
     q: "Are you more of a PM or an engineer?",
-    a: "Both, on purpose. I build the thing myself, and I care about whether it should exist and whether people use it.",
+    a: "Both, on purpose. I work out whether it should exist and who it's for, then build it myself and check whether people use it.",
   },
   {
     q: "Have you led a team?",

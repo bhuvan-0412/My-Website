@@ -33,7 +33,7 @@ export default function ContentPage() {
         </div>
       </section>
 
-      <section className="sec sec--paper" data-shape="roadmap">
+      <section className="sec sec--paper" data-shape="pin">
         <div className="wrap">
           <div className="sec__head">
             <LineReveal as="h2" className="display sec__title" lines={[<span key="j">The <span className="t-tangerine">journey.</span></span>]} onView />
@@ -65,12 +65,12 @@ export default function ContentPage() {
         </div>
       </section>
 
-      <section className="sec sec--tangerine reels-sec" data-shape="play">
-        <div className="wrap">
-          <div className="sec__head">
-            <LineReveal as="h2" className="display sec__title" lines={[<span key="m">Cut by <span className="t-tangerine">me.</span></span>]} onView />
+      <section className="sec sec--tangerine reels-sec" data-shape="scissors">
+        <div className="wrap reels-layout">
+          <div className="reels-intro">
+            <LineReveal as="h2" className="display sec__title" lines={["Cut by", <span key="m" className="t-tangerine">me.</span>]} onView />
             <Rise className="sec__aside">
-              <p>I edit every reel myself. A few I&apos;m proud of.</p>
+              <p>I edit every reel myself. Start with the one about me, then a few I&apos;m proud of.</p>
               <ul className="edit-skills">
                 {["Hooks", "Pacing", "Cuts", "Captions", "On-screen type", "Storytelling"].map((k) => (
                   <li key={k}>{k}</li>

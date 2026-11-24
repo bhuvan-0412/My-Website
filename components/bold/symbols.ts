@@ -1,74 +1,93 @@
 /**
- * Symbols the background icons arrange themselves into, one per section.
- * Each symbol is a list of strokes (polylines) in a -1..1 box; the icons are
- * spread evenly along the strokes.
+ * Symbols the background artifacts arrange themselves into, one per section.
+ * Each symbol is a list of strokes (polylines) in a -1..1 box. The artifacts are
+ * spread evenly along the strokes, and the strokes are also drawn as a thin line,
+ * so every symbol reads like a simple icon at a glance.
  */
-type P = [number, number];
-type Stroke = P[];
+export type P = [number, number];
+export type Stroke = P[];
 
 const arc = (cx: number, cy: number, r: number, a0: number, a1: number, n = 24): Stroke =>
   Array.from({ length: n + 1 }, (_, i) => {
     const a = ((a0 + ((a1 - a0) * i) / n) * Math.PI) / 180;
     return [cx + Math.cos(a) * r, cy + Math.sin(a) * r] as P;
   });
+const circle = (cx: number, cy: number, r: number, n = 28) => arc(cx, cy, r, 90, 450, n);
+const rect = (x0: number, y0: number, x1: number, y1: number): Stroke => [[x0, y0], [x1, y0], [x1, y1], [x0, y1], [x0, y0]];
 
 export const SYMBOLS: Record<string, Stroke[]> = {
-  // An idea: a lightbulb.
+  // An idea: a lightbulb with a few rays.
   bulb: [
-    arc(0, 0.28, 0.58, -50, 230, 30),
-    [[-0.37, -0.17], [-0.26, -0.52]],
-    [[0.37, -0.17], [0.26, -0.52]],
-    [[-0.28, -0.6], [0.28, -0.6]],
-    [[-0.22, -0.74], [0.22, -0.74]],
-    [[-0.12, -0.88], [0.12, -0.88]],
+    [[-0.24, -0.42], ...arc(0, 0.28, 0.55, 222, -42, 34), [0.24, -0.42]],
+    [[-0.3, -0.56], [0.3, -0.56]],
+    [[-0.24, -0.7], [0.24, -0.7]],
+    [[-0.12, -0.84], [0.12, -0.84]],
+    [[0, 0.98], [0, 1.16]],
+    [[-0.72, 0.8], [-0.84, 0.92]],
+    [[0.72, 0.8], [0.84, 0.92]],
   ],
   // "Should it exist?": a question mark.
   question: [
-    [...arc(0, 0.42, 0.42, 165, -40, 22), [0.08, -0.05], [0.04, -0.4]],
-    arc(0.04, -0.78, 0.09, 0, 360, 8),
+    [...arc(0, 0.44, 0.42, 160, -55, 26), [0.06, -0.12], [0.06, -0.38]],
+    circle(0.06, -0.76, 0.1, 10),
   ],
-  // A roadmap: a winding path with milestones.
-  roadmap: [
-    Array.from({ length: 30 }, (_, i) => {
-      const t = i / 29;
-      return [-0.95 + t * 1.9, -0.6 + t * 1.1 + Math.sin(t * Math.PI * 2.2) * 0.22] as P;
-    }),
+  // Idea to shipped: a rocket.
+  rocket: [
+    [[0, 1], [0.3, 0.58], [0.3, -0.42], [-0.3, -0.42], [-0.3, 0.58], [0, 1]],
+    circle(0, 0.24, 0.14, 12),
+    [[0.3, -0.06], [0.58, -0.52], [0.3, -0.42]],
+    [[-0.3, -0.06], [-0.58, -0.52], [-0.3, -0.42]],
+    [[-0.16, -0.56], [0, -0.96], [0.16, -0.56]],
   ],
-  // Growth: a rising arrow.
-  arrow: [
-    [[-0.9, -0.7], [-0.35, -0.15], [0.0, -0.4], [0.75, 0.55]],
-    [[0.75, 0.55], [0.35, 0.52]],
-    [[0.75, 0.55], [0.72, 0.15]],
+  // The numbers: a rising bar chart.
+  bars: [
+    [[-0.95, -0.8], [0.95, -0.8]],
+    rect(-0.78, -0.8, -0.44, -0.36),
+    rect(-0.3, -0.8, 0.04, -0.02),
+    rect(0.18, -0.8, 0.52, 0.36),
+    [[-0.62, -0.12], [-0.14, 0.24], [0.34, 0.62], [0.78, 0.94]],
+    [[0.78, 0.94], [0.5, 0.92]],
+    [[0.78, 0.94], [0.74, 0.66]],
   ],
-  // Building: code brackets.
+  // Building: code brackets </>.
   brackets: [
     [[-0.38, 0.62], [-0.92, 0], [-0.38, -0.62]],
     [[0.2, 0.75], [-0.15, -0.75]],
     [[0.38, 0.62], [0.92, 0], [0.38, -0.62]],
   ],
   // Shipped: a check inside a circle.
-  check: [arc(0, 0, 0.86, 0, 360, 34), [[-0.42, 0.02], [-0.1, -0.32], [0.46, 0.34]]],
+  check: [circle(0, 0, 0.86, 36), [[-0.42, 0.02], [-0.1, -0.32], [0.46, 0.34]]],
   // Experience: a milestone flag.
   flag: [
     [[-0.5, -0.92], [-0.5, 0.88]],
     [[-0.5, 0.88], [0.68, 0.58], [-0.5, 0.26]],
+    [[-0.8, -0.92], [-0.2, -0.92]],
   ],
   // Content: a play button.
-  play: [arc(0, 0, 0.88, 0, 360, 30), [[-0.3, 0.45], [0.45, 0], [-0.3, -0.45], [-0.3, 0.45]]],
+  play: [circle(0, 0, 0.88, 32), [[-0.28, 0.44], [0.46, 0], [-0.28, -0.44], [-0.28, 0.44]]],
+  // Editing: a pair of scissors.
+  scissors: [
+    circle(-0.42, -0.62, 0.26, 16),
+    circle(0.42, -0.62, 0.26, 16),
+    [[-0.26, -0.42], [0.42, 0.98]],
+    [[0.26, -0.42], [-0.42, 0.98]],
+  ],
+  // The journey: a map pin.
+  pin: [
+    [[0, -0.92], ...arc(0, 0.3, 0.52, 212, -32, 30), [0, -0.92]],
+    circle(0, 0.3, 0.18, 12),
+  ],
   // Questions: a speech bubble.
   bubble: [
-    [[-0.85, 0.55], [0.85, 0.55], [0.85, -0.3], [-0.2, -0.3], [-0.55, -0.7], [-0.5, -0.3], [-0.85, -0.3], [-0.85, 0.55]],
-    [[-0.4, 0.12], [-0.38, 0.12]],
-    [[0, 0.12], [0.02, 0.12]],
-    [[0.4, 0.12], [0.42, 0.12]],
+    [[-0.85, 0.6], [0.85, 0.6], [0.85, -0.3], [-0.2, -0.3], [-0.55, -0.72], [-0.5, -0.3], [-0.85, -0.3], [-0.85, 0.6]],
+    circle(-0.4, 0.15, 0.06, 6),
+    circle(0, 0.15, 0.06, 6),
+    circle(0.4, 0.15, 0.06, 6),
   ],
   // A person: about me.
-  user: [arc(0, 0.42, 0.36, 0, 360, 22), arc(0, -0.95, 0.85, 20, 160, 22)],
-  // Hello: a paper plane.
-  plane: [
-    [[-0.9, 0.05], [0.9, 0.7], [0.3, -0.75], [-0.9, 0.05]],
-    [[0.9, 0.7], [-0.15, -0.15], [0.3, -0.75]],
-  ],
+  user: [circle(0, 0.44, 0.36, 24), [...arc(0, -0.95, 0.85, 160, 20, 22), [-0.8, -0.66]]],
+  // Hello: an envelope.
+  mail: [rect(-0.92, -0.6, 0.92, 0.6), [[-0.92, 0.6], [0, -0.08], [0.92, 0.6]]],
 };
 
 /** Spread n points evenly along a symbol's strokes. */
@@ -96,5 +115,15 @@ export function samplePoints(name: string, n: number): P[] {
     }
     if (out.length < k + 1) out.push(segs[segs.length - 1].b);
   }
+  return out;
+}
+
+/** The symbol as flat line-segment pairs [x0,y0, x1,y1, ...], in drawing order. */
+export function segmentPairs(name: string): number[] {
+  const strokes = SYMBOLS[name] ?? SYMBOLS.bulb;
+  const out: number[] = [];
+  strokes.forEach((s) => {
+    for (let i = 1; i < s.length; i++) out.push(s[i - 1][0], s[i - 1][1], s[i][0], s[i][1]);
+  });
   return out;
 }

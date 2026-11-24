@@ -8,11 +8,13 @@ export default function ReelFrame({
   note,
   url,
   video,
+  badge = "/60",
 }: {
   title: string;
   note: string;
   url: string;
   video?: string;
+  badge?: string;
 }) {
   const ref = useRef<HTMLVideoElement>(null);
 
@@ -38,7 +40,7 @@ export default function ReelFrame({
         ) : (
           <div className="reel__card" aria-hidden>
             <span className="reel__day">{title}</span>
-            <span className="reel__of">/60</span>
+            <span className="reel__of">{badge}</span>
           </div>
         )}
         <span className="reel__play" aria-hidden>
