@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { pmSeries, reels } from "@/data/site";
+import { pmSeries, reels, reelTotals } from "@/data/site";
 import { Counter, LineReveal, Rise, Stagger } from "@/components/bold/Motion";
 import ReelFrame from "@/components/ReelFrame";
 import Journey from "@/components/bold/Journey";
@@ -70,7 +70,7 @@ export default function ContentPage() {
           <div className="reels-intro">
             <LineReveal as="h2" className="display sec__title" lines={["Cut by", <span key="m" className="t-tangerine">me.</span>]} onView />
             <Rise className="sec__aside">
-              <p>I edit every reel myself. These are my best edits, picked by what people liked most. Tap one to watch it here.</p>
+              <p>I edit every reel myself: {reelTotals.reels} reels, {Math.floor(reelTotals.views / 1000)}K+ views so far. These are the four most-watched. Tap one to watch it here.</p>
               <ul className="edit-skills">
                 {["Hooks", "Pacing", "Cuts", "Captions", "On-screen type", "Storytelling"].map((k) => (
                   <li key={k}>{k}</li>

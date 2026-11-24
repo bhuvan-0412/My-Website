@@ -773,6 +773,7 @@ body { background: var(--ink); }
   font-family: var(--font-mono), monospace; font-size: 0.78rem; font-weight: 700; backdrop-filter: blur(6px);
 }
 .reel__likes svg { color: var(--tangerine); }
+.reel__likes svg + svg, .reel__likes svg:not(:first-child) { margin-left: 6px; }
 .player {
   position: fixed; inset: 0; z-index: 200; display: grid; place-items: center; align-content: center; gap: 16px;
   padding: 24px 16px; background: rgba(7, 10, 18, 0.82); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);

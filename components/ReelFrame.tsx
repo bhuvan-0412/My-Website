@@ -4,6 +4,9 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
+/** 4264 → "4.3K" */
+const compact = (n: number) => (n >= 1000 ? `${(n / 1000).toFixed(1).replace(/\.0$/, "")}K` : String(n));
+
 /** Instagram reel id from a reel URL, e.g. ".../reel/DcASSYVMnSe/" → "DcASSYVMnSe". */
 const reelId = (url: string) => url.match(/\/reel\/([^/?#]+)/)?.[1];
 
@@ -18,6 +21,7 @@ export default function ReelFrame({
   video,
   badge = "/60",
   likes,
+  views,
 }: {
   title: string;
   note: string;
@@ -25,6 +29,7 @@ export default function ReelFrame({
   video?: string;
   badge?: string;
   likes?: number;
+  views?: number;
 }) {
   const ref = useRef<HTMLVideoElement>(null);
   const [open, setOpen] = useState(false);
@@ -85,12 +90,24 @@ export default function ReelFrame({
               <path d="M8 5.5v13l10.5-6.5z" fill="currentColor" />
             </svg>
           </span>
-          {likes ? (
-            <span className="reel__likes" aria-label={`${likes} likes`}>
-              <svg viewBox="0 0 24 24" width="13" height="13" aria-hidden>
-                <path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.5 6.7 4.5c2.1 0 3.7 1.2 4.3 2.6.6-1.4 2.2-2.6 4.3-2.6 3.7 0 5.8 3.9 4.3 7.3C19.5 16.4 12 21 12 21z" fill="currentColor" />
-              </svg>
-              {likes}
+          {views || likes ? (
+            <span className="reel__likes" aria-label={`${views ?? 0} views, ${likes ?? 0} likes`}>
+              {views ? (
+                <>
+                  <svg viewBox="0 0 24 24" width="12" height="12" aria-hidden>
+                    <path d="M7 4.5v15l13-7.5z" fill="currentColor" />
+                  </svg>
+                  {compact(views)}
+                </>
+              ) : null}
+              {likes ? (
+                <>
+                  <svg viewBox="0 0 24 24" width="13" height="13" aria-hidden>
+                    <path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.5 6.7 4.5c2.1 0 3.7 1.2 4.3 2.6.6-1.4 2.2-2.6 4.3-2.6 3.7 0 5.8 3.9 4.3 7.3C19.5 16.4 12 21 12 21z" fill="currentColor" />
+                  </svg>
+                  {likes}
+                </>
+              ) : null}
             </span>
           ) : null}
         </div>

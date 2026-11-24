@@ -195,17 +195,20 @@ export const pmSeries: { day: number; lesson: string; url: string }[] = [
 ];
 
 /**
- * Best edits for the "Cut by me" showcase, picked by likes (checked 24 Nov 2026).
- * Each one plays on the page in Instagram's own player.
+ * Best edits for the "Cut by me" showcase: the four most-watched reels
+ * (views and likes checked on 24 Nov 2026). Each one plays on the page in Instagram's own player.
  * Optional `video`: put an .mp4 in /public/reels/ and set e.g. "/reels/about-me.mp4"
  * to play it right on the card instead (muted, when in view).
  */
-export const reels: { title: string; note: string; url: string; likes: number; video?: string; badge?: string }[] = [
-  { title: "About me", note: "Stop waiting for the right moment", url: "https://www.instagram.com/reel/DcASSYVMnSe/", likes: 193, badge: "Intro" },
-  { title: "Day 20", note: "Why a clear PRD matters", url: "https://www.instagram.com/its.bhuvan.builds/reel/Dfd2_UQTfB6/", likes: 76 },
-  { title: "Day 11", note: "Analyse, strategise, grow", url: "https://www.instagram.com/its.bhuvan.builds/reel/DetERK7Mo9m/", likes: 70 },
-  { title: "Day 16", note: "Less chaos, more clarity", url: "https://www.instagram.com/its.bhuvan.builds/reel/DfCgwiSsSEn/", likes: 69 },
+export const reels: { title: string; note: string; url: string; views: number; likes: number; video?: string; badge?: string }[] = [
+  { title: "About me", note: "Stop waiting for the right moment", url: "https://www.instagram.com/reel/DcASSYVMnSe/", views: 4264, likes: 193, badge: "Intro" },
+  { title: "Startup journey", note: "Ep. 1: let's see where this goes", url: "https://www.instagram.com/reel/DcMmjhlsY_o/", views: 3037, likes: 126, badge: "Ep. 1" },
+  { title: "Keep it boring", note: "Let life get interesting", url: "https://www.instagram.com/reel/DcoSjSIs14i/", views: 2903, likes: 136, badge: "Mindset" },
+  { title: "Day 3", note: "The right solution starts with the right problem", url: "https://www.instagram.com/reel/DcYyiH-sX8_/", views: 2294, likes: 96 },
 ];
+
+/** Channel totals across all reels (24 Nov 2026). */
+export const reelTotals = { reels: 26, views: 42800 };
 
 /* ── Extra data for the bold design ─────────────────────── */
 
